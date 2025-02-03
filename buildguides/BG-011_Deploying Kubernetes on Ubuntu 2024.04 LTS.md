@@ -24,18 +24,32 @@ In this guide, we'll walk you through the essential steps to set up, configure, 
 
 ### Development Environment
 
-Resource Specifications
-
-- Compute
-
-- - Networking
-
-- - - Storage
-
-Dependencies
-
-
-
+- Resource Specifications
+  - Physical Hardware
+    - Dell Precision 3260
+      - 13th Gen Intel(R) Core(TM) i9-13900 2.00 GHz
+      - 32GB RAM
+      - Windows 11 Enterprise 24H2
+  - Hypervisor: Hyper-V
+    - Compute
+      - 2 vCPUs
+      - 1GB/4GB RAM Start/Max
+      - Ubuntu 24.04 LTS Minimual Installation
+    - Networking
+      - Host VLAN
+        - Nodes CIDR: 10.0.69.32/27
+      - Cluster VXLAN
+        - Pods CIDR: 172.16.69.32/27
+        - Service CIDR: 172.16.68.64/26
+    - Storage
+      - NFS Share Server
+      - NFS Share Clients
+- Assuptions & Dependencies
+  - It is assumed that K8s is being deployed in an on-premises and offline laboratory environment to ensure strict configuration control.
+  - It is assumed that all administration will be initiated or pushed to K8s cluster control and worker nodes. All commands should done remotely unless directed otherwise.
+  - It is assumed that satic software and YAML files can be transferred from a bastion host into the offline environment.
+  - It is assumed that all containers and images will be pulled from the Internet when the bastion host is connected to the external network, retagged with offline URL, then pushed to the offline registry.
+  - It is assumed that all containers and images, when the bastion host is connected to the internal lab network, will be pulled from the offline registry.
 
 ## Table of Contents
 
