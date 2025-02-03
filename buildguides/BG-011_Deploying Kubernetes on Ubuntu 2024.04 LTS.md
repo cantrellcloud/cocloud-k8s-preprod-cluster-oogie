@@ -1,4 +1,4 @@
-# cocloud-k8s-dev-cluster-stitch
+# cocloud-k8s-dev-cluster-oogie
 
 COCloud K8s Development Cluster Oogie
 
@@ -16,7 +16,30 @@ COCloud K8s Development Cluster Oogie
 <------------->
 ```
 
-## About
+## Introduction
+
+Kubernetes, often abbreviated as K8s, is an open-source platform designed to automate the deployment, scaling, and operation of application containers. It provides a robust framework to run distributed systems resiliently, handling scaling and failover for Enterprise applications, and providing deployment patterns for developers. Whether you're managing a few containers or scaling to thousands, Kubernetes offers the tools and capabilities to ensure your applications run smoothly and efficiently.
+
+In this guide, we'll walk you through the essential steps to set up, configure, and deploy a single application on Kubernetes using VXLAN network features. We'll start with setting up a Kubernetes cluster, followed by configuring networking, necessary components and resources, and finally deploying the application. By the end of this guide, you'll have a solid understanding of the Kubernetes architecture and be well-equipped to begin containerizing applications in an Enterprise production environment.
+
+### Development Environment
+
+Resource Specifications
+
+- Compute
+
+-- Networking
+
+---- Storage
+
+Dependencies
+
+
+
+
+## Table of Contents
+
+
 
 
 
@@ -43,13 +66,7 @@ on Ubuntu 24.04.1 LTS
 >
 ---
 
-## Introduction
-
-After carefully following the below instructions, only a single master cluster will be deployed.
-You then need to join any other node using the generated key and label.
-
-Following the instructions given, you should be able to configure and initialize a default
-Kubernetes cluster with NSX networking overlays.
+## 
 
 ### This is the desired end state for the Enterprise
 
