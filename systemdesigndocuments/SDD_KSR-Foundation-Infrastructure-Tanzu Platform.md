@@ -1,6 +1,6 @@
-# Infrastructure
+# Enterprise Infrastructure
 
-## Key Service Resilincy Foundation Infrastructre
+## Key Service Resilincy - Foundation Infrastructure
 
 ### VMware Tanzu Platform
 
