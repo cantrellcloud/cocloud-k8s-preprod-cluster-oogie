@@ -2,7 +2,8 @@
 
 COCloud K8s Development Cluster Oogie
 
-```   _
+```
+      _
       _\___
     /     \
    | <> <> |
