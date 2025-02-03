@@ -28,9 +28,9 @@ Resource Specifications
 
 - Compute
 
--- Networking
+- - Networking
 
----- Storage
+- - - Storage
 
 Dependencies
 
