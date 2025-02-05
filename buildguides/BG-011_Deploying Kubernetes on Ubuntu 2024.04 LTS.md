@@ -497,7 +497,7 @@ ufw status verbose
 
 ## Install ContainerD
 
-- create containerd.conf and kube.conf
+- create containerd.conf
 
 ```bash
 tee /etc/modules-load.d/containerd.conf <<EOF
@@ -506,7 +506,11 @@ br_netfilter
 EOF
 modprobe overlay
 modprobe br_netfilter
+```
 
+- create kube.conf
+
+```bash
 tee /etc/sysctl.d/kube.conf <<EOT
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
@@ -517,8 +521,6 @@ sysctl --system
 ```
 
 ### Install nerdctl Command Line Tool
-
-- References
 
 - Download and extract nerdctl's binaries
 
@@ -547,11 +549,12 @@ sudo systemctl daemon-reload
 cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.controllers  - run as non-root user on k8s-controllers
 ```
 
-## Install Containerd
+### Install Containerd
 
-follow this for now: https://github.com/containerd/containerd/blob/main/docs/getting-started.md
+- Follow this for now:
+  - <https://github.com/containerd/containerd/blob/main/docs/getting-started.md>
 
-```
+```bash
 tar Cxzvf /usr/local containerd-x.x.x-linux-amd64.tar.gz
 
 sudo install -m 755 runc.amd64 /usr/local/sbin/runc
@@ -567,71 +570,72 @@ systemctl enable --now containerd
 
 configure the system so it starts using systemd as cgroup - still need to work on this
 
-```
+```bash
 containerd config default | tee /etc/containerd/config.toml >/dev/null 2>&1
 ```
 
 verify containerd config file - still need to work on this
 
-```
+```bash
 cat /etc/containerd/config.toml
 ```
 
-> ...
->   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
->     SystemdCgroup = true
-
-setup the service to start automatically and check to make sure it is running
-
+```text
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+SystemdCgroup = true
 ```
+
+- Setup the service to start automatically and check to make sure it is running
+
+```bash
 systemctl restart containerd
 systemctl enable containerd
 systemctl status containerd
 ```
 
-14. Pull kubeadm config images and initialize default configuration
+## Pull kubeadm config images and initialize default configuration
 
-pull kubeadm default config - only on one of the controllers
+- Pull kubeadm default config - only on one of the controllers
 
-```
+```bash
 sysctl --system
 kubeadm config images pull
 ```
 
-initialize default configuration
-- if building an image, this is a good time to take snapshot 1
+- Initialize default configuration
+  - If building an image, this is a good time to take snapshot 1
 
-```
+```bash
 kubeadm init
 ```
 
-Perform next commands as a regular user
+- Perform next commands as a regular user
 
-```
+```bash
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-15. Modify the kubelet
+## Modify the kubelet
 
 ConfigMap
 Should be set, run command to verify cgroupDriver: systemd
 
-```
+```bash
 kubectl edit cm kubelet-config -n kube-system
 ```
 
-Labels
+- Node Labels
 
-```
+```bash
 kubectl label node kubectrl02 node-role.kubernetes.io/control-plane=
 kubectl label node kubework01 node-role.kubernetes.io/worker=
 ```
 
-16. Install Calico network overlay
+## Install Calico network overlay
 
-```
+```bash
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/tigera-operator.yaml
 curl https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/custom-resources.yaml
 kubectl create -f custom-resources.yaml
@@ -639,113 +643,91 @@ kubectl create -f custom-resources.yaml
 
 initialize overlay
 
-```
+```bash
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
 may take a few minutes for all nodes in the cluster to spin up all the networking nodes and **report ready**
-- you can watch by entering the following command
-	
-	```
-	watch kubectl get pods -n calico-system
-	```
 
-Configure NSX overlay
-- it is best practice to use manifest (yaml) files which will be added in a future release
-- for now, create config.yaml files for each of the following IPPools to enable NSX overlay
+- You can watch by entering the following command
 
-	```
-	apiVersion: crd.projectcalico.org/v1
-	kind: IPPool
-	metadata:
-	  name: ippool-vxlan-dev-internal-subnets
-	  namespace: dev-internal
-	spec:
-	  allowedUses:
-		- Workload
-		- Tunnel
-	  blockSize: 26
-	  cidr: 192.168.69.0/24
-	  ipipMode: Always
-	  natOutgoing: true
-	  nodeSelector: all()
-	  vxlanMode: CrossSubnet
-	```
-
-	```
-	apiVersion: crd.projectcalico.org/v1
-	kind: IPPool
-	metadata:
-	  name: ippool-vxlan-dev-external-subnets
-	  namespace: dev-external
-	spec:
-	  allowedUses:
-		- Workload
-		- Tunnel
-	  blockSize: 26
-	  cidr: 192.168.68.0/24
-	  ipipMode: Always
-	  natOutgoing: true
-	  nodeSelector: all()
-	  vxlanMode: CrossSubnet
-	```
-
-17. Verify Kubernetes is running
-
+```bash
+watch kubectl get pods -n calico-system
 ```
+
+- Configure NSX overlay
+  - It is best practice to use manifest (yaml) files which will be added in a future release
+  - For now, create config.yaml files for each of the following IPPools to enable NSX overlay
+
+```yaml
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: ippool-vxlan-dev-internal-subnets
+  namespace: dev-internal
+spec:
+  allowedUses:
+  - Workload
+  - Tunnel
+  blockSize: 26
+  cidr: 192.168.69.0/24
+  ipipMode: Always
+  natOutgoing: true
+  nodeSelector: all()
+  vxlanMode: CrossSubnet
+```
+
+```yaml
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: ippool-vxlan-dev-external-subnets
+  namespace: dev-external
+spec:
+  allowedUses:
+  - Workload
+  - Tunnel
+  blockSize: 26
+  cidr: 192.168.68.0/24
+  ipipMode: Always
+  natOutgoing: true
+  nodeSelector: all()
+  vxlanMode: CrossSubnet
+```
+
+## Verify Kubernetes is running
+
+```bash
 kubectl get nodes
 ```
 
-if building an image, this is a good time to take snapshot 2
+- If building an image, this is a good time to take snapshot 2
 
-18. Add additional nodes to cluster and labels, taints, and tolerances
+## Add additional nodes to cluster and labels, taints, and tolerances
 
-To join nodes, you must fist have a key
-Copy/paste the displayed output to other nodes that are ready to be added to the cluster
+- To join nodes, you must fist have a key
+  - Copy/paste the displayed output to other nodes that are ready to be added to the cluster
 
-```
+```bash
 kubeadm token create --print-join-command
 ```
 
-on each worker node as a regular user
+- On each worker node as a regular user
 
-```
+```bash
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-label nodes
+- Label nodes
 
-```
+```bash
 kubectl label node nodename key=value
 ```
 
-to bash into a pod
+- To bash into a pod
 
-```
+```bash
 k exec --stdin --tty dev-intdmz-linux-test-65bf85b85d-lnnhw --namespace=dev-external -- /bin/bash
 ```
-
----
-
-# COCloud Applications
-
-Applications to be added or migrated to Kubernetes
-
-Unifi controller on kubernetes
-
-	https://medium.com/@reefland/migrating-unifi-network-controller-from-nerdctl-to-kubernetes-5aac8ed8da76
-	https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/
-
-Load balancing
-
-	https://github.com/kube-vip/kube-vip-cloud-provider
-
-Kube management
-
-	https://portworx.com/
-
-HashiCorp Vault deployed on K8s
-
-	In a future release
