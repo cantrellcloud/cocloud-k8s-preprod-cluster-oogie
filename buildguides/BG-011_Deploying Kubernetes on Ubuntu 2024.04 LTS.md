@@ -1,6 +1,22 @@
-# Deploying Kubernetes on Ubuntu 2024.04 LTS
+# Deploying Kubernetes on Ubuntu 2024.04 LTS Build Guide
 
-- [Deploying Kubernetes on Ubuntu 2024.04 LTS](#deploying-kubernetes-on-ubuntu-202404-lts)
+COCloud K8s Development Cluster Oogie
+
+```text
+      _
+      _\___
+    /     \
+   | <> <> |
+    \ ( ) /
+     |||||
+ \---/|||\---/
+     |||||
+     |||||
+    _/   \_   
+<------------->
+```
+
+- [Deploying Kubernetes on Ubuntu 2024.04 LTS Build Guide](#deploying-kubernetes-on-ubuntu-202404-lts-build-guide)
   - [Introduction](#introduction)
   - [Development Environment](#development-environment)
     - [Resource Specifications](#resource-specifications)
@@ -41,22 +57,6 @@
     - [Install Calico network overlay](#install-calico-network-overlay)
     - [Verify Kubernetes is running](#verify-kubernetes-is-running)
     - [Add additional nodes to cluster and labels, taints, and tolerances](#add-additional-nodes-to-cluster-and-labels-taints-and-tolerances)
-
-COCloud K8s Development Cluster Oogie
-
-```text
-      _
-      _\___
-    /     \
-   | <> <> |
-    \ ( ) /
-     |||||
- \---/|||\---/
-     |||||
-     |||||
-    _/   \_   
-<------------->
-```
 
 ## Introduction
 
