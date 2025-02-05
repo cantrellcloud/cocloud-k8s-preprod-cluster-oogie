@@ -1,4 +1,46 @@
-# cocloud-k8s-dev-cluster-oogie
+# Deploying Kubernetes on Ubuntu 2024.04 LTS
+
+- [Deploying Kubernetes on Ubuntu 2024.04 LTS](#deploying-kubernetes-on-ubuntu-202404-lts)
+  - [Introduction](#introduction)
+  - [Development Environment](#development-environment)
+    - [Resource Specifications](#resource-specifications)
+    - [Logical Topology](#logical-topology)
+    - [References, Tools, and Notes](#references-tools-and-notes)
+      - [References](#references)
+        - [Repositories](#repositories)
+        - [URLs](#urls)
+      - [Tools](#tools)
+        - [Add Command Line Aliases](#add-command-line-aliases)
+      - [Update OS and Install Kubernetes Tools \& Dependencies](#update-os-and-install-kubernetes-tools--dependencies)
+    - [Certificate Authority](#certificate-authority)
+      - [Generate Kubernetes Cluster Intermediate Signing CA Certificate](#generate-kubernetes-cluster-intermediate-signing-ca-certificate)
+    - [Create and Configure Offline Registry](#create-and-configure-offline-registry)
+    - [Install Helm](#install-helm)
+      - [Install Helm Charts](#install-helm-charts)
+    - [Install NFS Shares](#install-nfs-shares)
+    - [Install Linux Integration Services (Hyper-V Tools)](#install-linux-integration-services-hyper-v-tools)
+  - [Kubernetes cluster system configuration and initialization](#kubernetes-cluster-system-configuration-and-initialization)
+    - [Verify the MAC address and product\_uuid are unique for every node](#verify-the-mac-address-and-product_uuid-are-unique-for-every-node)
+    - [Network Configuration](#network-configuration)
+    - [Set NTP Client](#set-ntp-client)
+    - [Update hosts File](#update-hosts-file)
+    - [Disable systemd-networkd-wait-online](#disable-systemd-networkd-wait-online)
+    - [Turn off swap now and make persistent across reboots](#turn-off-swap-now-and-make-persistent-across-reboots)
+    - [Download public signing key for kubernetes repositories](#download-public-signing-key-for-kubernetes-repositories)
+    - [add kubernetes apt repository](#add-kubernetes-apt-repository)
+    - [update apt index and install kubernetes packages](#update-apt-index-and-install-kubernetes-packages)
+    - [enable kubelet service](#enable-kubelet-service)
+    - [Update firewall rules](#update-firewall-rules)
+  - [Install Container Runtime](#install-container-runtime)
+    - [Install nerdctl Command Line Tool](#install-nerdctl-command-line-tool)
+    - [Install Containerd](#install-containerd)
+  - [Initialize Kubernetes Configuration](#initialize-kubernetes-configuration)
+    - [Pull kubeadm config images](#pull-kubeadm-config-images)
+    - [Initialize default configuration](#initialize-default-configuration)
+    - [Modify the kubelet](#modify-the-kubelet)
+    - [Install Calico network overlay](#install-calico-network-overlay)
+    - [Verify Kubernetes is running](#verify-kubernetes-is-running)
+    - [Add additional nodes to cluster and labels, taints, and tolerances](#add-additional-nodes-to-cluster-and-labels-taints-and-tolerances)
 
 COCloud K8s Development Cluster Oogie
 
@@ -16,21 +58,6 @@ COCloud K8s Development Cluster Oogie
 <------------->
 ```
 
-## Table of Contents
-
-1. [Introduction] (#intro)
-2. [Development Environment] (#devenv)
-   1. [Resource Specifications] (#resourcespec)
-   2. [Assumptions & Dependencies] (#assumptdepend)
-3. [Logical Topology] (#logicaltopology)
-4. References and Notes
-   1. Repositories
-   2. Install nerdctl Command Line Tool
-   3. Certificates
-      1. Install Kubernetes Self-Signed CA
-      2. Install Kubernetes Intermediate CA using third-party CA
-   4. Prepare Internal Registry
-
 ## Introduction
 
 Kubernetes, often abbreviated as K8s, is an open-source platform designed to automate the deployment, scaling, and operation of application containers. It provides a robust framework to run distributed systems resiliently, handling scaling and failover for Enterprise applications, and providing deployment patterns for developers. Whether you're managing a few containers or scaling to thousands, Kubernetes offers the tools and capabilities to ensure your applications run smoothly and efficiently.
@@ -39,26 +66,27 @@ In this guide, we'll walk you through the essential steps to set up, configure, 
 
 ## Development Environment
 
-- Resource Specifications
-  - Physical Hardware
-    - Dell Precision 3260
-      - 13th Gen Intel(R) Core(TM) i9-13900 2.00 GHz
-      - 32GB RAM
-      - Windows 11 Enterprise 24H2
-  - Hypervisor: Hyper-V
-    - Compute
-      - 2 vCPUs
-      - 1GB/4GB RAM Start/Max
-      - Ubuntu 24.04 LTS Minimal Installation
-    - Networking
-      - Host VLAN
-        - Nodes CIDR: 10.0.69.32/27
-      - Cluster VXLAN
-        - Pods CIDR: 172.16.69.32/27
-        - Service CIDR: 172.16.68.64/26
-    - Storage
-      - NFS Share Server
-      - NFS Share Clients
+### Resource Specifications
+
+- Physical Hardware
+  - Dell Precision 3260
+    - 13th Gen Intel(R) Core(TM) i9-13900 2.00 GHz
+    - 32GB RAM
+    - Windows 11 Enterprise 24H2
+- Hypervisor: Hyper-V
+  - Compute
+    - 2 vCPUs
+    - 1GB/4GB RAM Start/Max
+    - Ubuntu 24.04 LTS Minimal Installation
+  - Networking
+    - Host VLAN
+      - Nodes CIDR: 10.0.69.32/27
+    - Cluster VXLAN
+      - Pods CIDR: 172.16.69.32/27
+      - Service CIDR: 172.16.68.64/26
+  - Storage
+    - NFS Share Server
+    - NFS Share Clients
 - Assumptions & Dependencies
   - It is assumed that K8s is being deployed in an on-premises and offline laboratory environment to ensure strict configuration control.
   - It is assumed that all administration will be initiated or pushed to K8s cluster control and worker nodes. All commands should be done remotely unless directed otherwise.
@@ -67,7 +95,7 @@ In this guide, we'll walk you through the essential steps to set up, configure, 
   - It is assumed that all containers and images will be pulled from the Internet when the bastion host is connected to the external network, tagged with offline URL, then pushed to the offline registry.
   - It is assumed that all containers and images, when the bastion host is connected to the internal lab network, will be pulled from the offline registry.
 
-## Logical Topology
+### Logical Topology
 
 ```text
    +===============================================================================================+
@@ -101,9 +129,13 @@ In this guide, we'll walk you through the essential steps to set up, configure, 
    +===============================================================================================+
 ```
 
-## Tools, References, and Notes
+### References, Tools, and Notes
 
-### Repositories
+#### References
+
+##### Repositories
+
+- This is an all inclusive list of the repositories and configuration files used throughout this deployment
 
 ```text
 raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/tigera-operator.yaml
@@ -115,12 +147,14 @@ download.nerdctl.com/linux/ubuntu/gpg
 download.nerdctl.com/linux/ubuntu
 ```
 
-### References
+##### URLs
 
 <https://github.com/containerd/nerdctl>
 <https://github.com/containerd/containerd/blob/main/docs/getting-started.md>
 
-### Add Command Line Aliases
+#### Tools
+
+##### Add Command Line Aliases
 
 - For frequently used commands
 
@@ -147,7 +181,7 @@ EOF
 source ~/.bash_aliases
 ```
 
-### Update OS and Install Dependencies
+#### Update OS and Install Kubernetes Tools & Dependencies
 
 ```bash
 apt update && apt upgrade -y
@@ -495,7 +529,7 @@ ufw enable
 ufw status verbose
 ```
 
-## Install ContainerD
+## Install Container Runtime
 
 - create containerd.conf
 
@@ -593,7 +627,9 @@ systemctl enable containerd
 systemctl status containerd
 ```
 
-## Pull kubeadm config images and initialize default configuration
+## Initialize Kubernetes Configuration
+
+### Pull kubeadm config images
 
 - Pull kubeadm default config - only on one of the controllers
 
@@ -602,6 +638,8 @@ sysctl --system
 kubeadm config images pull
 ```
 
+### Initialize default configuration
+
 - Initialize default configuration
   - If building an image, this is a good time to take snapshot 1
 
@@ -609,7 +647,7 @@ kubeadm config images pull
 kubeadm init
 ```
 
-- Perform next commands as a regular user
+- - Perform next commands as a regular user
 
 ```bash
 mkdir -p $HOME/.kube
@@ -617,7 +655,7 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-## Modify the kubelet
+### Modify the kubelet
 
 ConfigMap
 Should be set, run command to verify cgroupDriver: systemd
@@ -633,7 +671,7 @@ kubectl label node kubectrl02 node-role.kubernetes.io/control-plane=
 kubectl label node kubework01 node-role.kubernetes.io/worker=
 ```
 
-## Install Calico network overlay
+### Install Calico network overlay
 
 ```bash
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/tigera-operator.yaml
@@ -641,15 +679,14 @@ curl https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/cu
 kubectl create -f custom-resources.yaml
 ```
 
-initialize overlay
+- Initialize network overlay
 
 ```bash
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
-may take a few minutes for all nodes in the cluster to spin up all the networking nodes and **report ready**
-
-- You can watch by entering the following command
+- may take a few minutes for all nodes in the cluster to spin up all the networking nodes and **report ready**
+  - You can watch by entering the following command
 
 ```bash
 watch kubectl get pods -n calico-system
@@ -695,7 +732,7 @@ spec:
   vxlanMode: CrossSubnet
 ```
 
-## Verify Kubernetes is running
+### Verify Kubernetes is running
 
 ```bash
 kubectl get nodes
@@ -703,7 +740,7 @@ kubectl get nodes
 
 - If building an image, this is a good time to take snapshot 2
 
-## Add additional nodes to cluster and labels, taints, and tolerances
+### Add additional nodes to cluster and labels, taints, and tolerances
 
 - To join nodes, you must fist have a key
   - Copy/paste the displayed output to other nodes that are ready to be added to the cluster
