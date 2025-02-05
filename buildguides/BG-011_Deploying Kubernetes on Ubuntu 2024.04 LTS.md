@@ -27,8 +27,9 @@ COCloud K8s Development Cluster Oogie
         - [URLs](#urls)
       - [Tools](#tools)
         - [Add Command Line Aliases](#add-command-line-aliases)
-      - [Update OS and Install Kubernetes Tools \& Dependencies](#update-os-and-install-kubernetes-tools--dependencies)
-    - [Certificate Authority](#certificate-authority)
+        - [Update OS and Install Tools](#update-os-and-install-tools)
+    - [Cluster Certificates](#cluster-certificates)
+      - [Kubernetes Cluster Certificate Authority](#kubernetes-cluster-certificate-authority)
       - [Generate Kubernetes Cluster Intermediate Signing CA Certificate](#generate-kubernetes-cluster-intermediate-signing-ca-certificate)
     - [Create and Configure Offline Registry](#create-and-configure-offline-registry)
     - [Install Helm](#install-helm)
@@ -181,7 +182,7 @@ EOF
 source ~/.bash_aliases
 ```
 
-#### Update OS and Install Kubernetes Tools & Dependencies
+##### Update OS and Install Tools
 
 ```bash
 apt update && apt upgrade -y
@@ -190,9 +191,13 @@ apt-mark hold kubelet kubeadm kubectl
 apt update && apt upgrade -y
 ```
 
-### Certificate Authority
+### Cluster Certificates
 
-Create the Kubernetes Cluster CA
+This deployment uses a custom PKI configuration that will generate a Certificate Signing Request (CSR) to be signed by an external Root Certificate Authority. The certificate authority created by this deployment will be a Subordinate CA used for signing all certificates requested and signed for use solely by the deployed Kubernetes cluster.
+
+#### Kubernetes Cluster Certificate Authority
+
+- Create the CA folder structure
 
 ```bash
   sudo -i
@@ -202,14 +207,30 @@ Create the Kubernetes Cluster CA
   mkdir /opt/ca/newcerts
   mkdir /opt/ca/private
   mkdir /opt/ca/requests
+
   touch /opt/ca/index.txt
   echo '1000' /opt/ca/serial
+```
+
+- Set strict permissions of the CA folder
+
+```bash
   chmod 600 /opt/ca
+```
+
+- Generate the CA private key and create CA CSR
+
+```bash
   cd /opt/ca
   openssl genrsa -aes256 -out private/cakey.pem 4096
   openssl req -new -x509 -key /opt/ca/cakey.pem -out cacert.pem -days 3650
-  vi /usr/lib/ssl/openssl.cnf # [CA_default] dir = /opt/ca # Where everything is kept
   cd /opt/requests
+```
+
+- Set CA folder as the CA_default for openssl
+
+```bash
+  sed vi /usr/lib/ssl/openssl.cnf # [CA_default] dir = /opt/ca # Where everything is kept
 ```
 
 #### Generate Kubernetes Cluster Intermediate Signing CA Certificate
