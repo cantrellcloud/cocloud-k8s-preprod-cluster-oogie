@@ -1,0 +1,48 @@
+machine:
+    network:
+      nameservers:
+          - 10.0.1.34
+          - 10.231.1.34
+      searchDomains:
+          - dev.local
+      extraHostEntries:
+          - ip: 10.0.3.220
+            aliases:
+              - docker.io
+              - registry.k8s.io
+              - download.docker.com
+#   install:
+#         extraKernelArgs:
+#             - talos.platform=on-premises
+#             - reboot=k
+    registries:
+      mirrors:
+          docker.io:
+              endpoints:
+                  - http://10.0.3.229:6000/
+          gcr.io:
+              endpoints:
+                  - http://10.0.3.229:6000/
+          ghcr.io:
+              endpoints:
+                  - http://10.0.3.229:6000/
+          registry.k8s.io:
+              endpoints:
+                  - http://10.0.3.229:6000/
+    disks:
+        - device: /dev/sdb
+          partitions:
+            - mountpoint: /var/mnt/workerdata
+    nodeAnnotations:
+        customer.io/clustertype: "dev"
+        customer.io/poc: "sofzud"
+    files:
+        - content: '-----BEGIN CERTIFICATE-----MIIFtTCCA52gAwIBAgIUGGhn5o8aLUpYS35M3fne5WXJE6cwDQYJKoZIhvcNAQELBQAwajELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB0Zsb3JpZGExDjAMBgNVBAcMBVRhbXBhMQwwCgYDVQQKDANOR0MxDzANBgNVBAsMBkNhbGljbzEaMBgGA1UEAwwRS3ViZXJuZXRlcy1EZXYtQ0EwHhcNMjUwMTI0MTI0NjU2WhcNMzUwMTIyMTI0NjU2WjBqMQswCQYDVQQGEwJVUzEQMA4GA1UECAwHRmxvcmlkYTEOMAwGA1UEBwwFVGFtcGExDDAKBgNVBAoMA05HQzEPMA0GA1UECwwGQ2FsaWNvMRowGAYDVQQDDBFLdWJlcm5ldGVzLURldi1DQTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBALrDuh+F7Yn9SUJkWI1QMfl8q6d/1mGXJyaWX3oToffIlQpA+3m9dXESRcU4Tu2d37Arfcq+HVlMz0OYLUepEfQvNBR6DlEr+wLiLtD5J87oSWB2FnBmqnQEIofum0BodOIUYHdfH+6dTB0M6+Z+eO55VZRPkMZHQajmGPnX2KdD/VRg2YhFhY+MCTU657EWnrEdwA+L3ORveEAYsJh0GTqqqOZwTxUqUo2Pa/u5nWZojSJWc3ZXd9kamZqpuJ2AUXurR22z/PVSQg3OTv6o9zGdK0GAeyLHLtL52RC1paRlfq/lHhR2HNw7dQq/EgNpqcGTH2uim3hD1P5ltlaSegDa2NZpmjv2ctUu5ePiGa7OHBmuJ0d5KknmHD68jtoBPW5E034qRsB9aEN9F97PmOtgkjEFCBpxUbVOPdu4K+hHQG67kYwhc2654+YWI5QraCTI8mOlA/7dTpXfwE9VxJb1Dc58p8ARtY1OqdCAbVGDHd4OLdce93cXaKT3Tuqm7LiSf92IGy67Gt4OaLeqzaBQ2y6AcF0BopVb3kzGbNWRuQ6FpWbhsc0Axb1qTGeyB0QILaMonLtFNCa9+5aIbibwS4uLO4i8Cq7OSQAzEV9qMBidMxIBVt+10R7BuDbBBS3kK8ZtVaABvmf9ajph5oEwiRULgylI7m/eZtuxIMrdAgMBAAGjUzBRMB0GA1UdDgQWBBSnKOmzHYqW8EatPKsH6Y8uokLi3DAfBgNVHSMEGDAWgBSnKOmzHYqW8EatPKsH6Y8uokLi3DAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4ICAQBx4waMqus26FG8XFoNSU3sAT95PUv47Co5DnJxaUNJUen+f72yTzT5wgHzElcKoJ7KtIRs1dZHo+vdnk6PMJ7v0iJj6A/Dig+tzL+OKtfxQbyW0Lsj+A15nKnWPuwhmdpc2FbfqAQUhetPB1TLfCYcJEtaLcfm3KMyxQ57MMz2gNiTOrbjJGMOXUrdmnRELbxsVU9C6VsOZ/pg+Cq332QZ0fqLMZiBxhJHscjKfaUkkMG5xGLdpktKAoFnlG6CPLCVYsMHWwxGUztwAUYKHSmAZRS4Bnx5pyeCHOFxwCevGeOFFuyt10kU3goy9VTBmJraskr5bdz1EORn43mHPNBuT4z0qnP6AtjBqFB8Nu7M2bN+CsY6WMZffqFMqEfHLINChTjRR26H13SFLwphYizLG8+ogEV0/cnr32zEqiwj7pmvrMRXiLX4PxFU2LXEFQp/FnxWC796Ip/IdlAFXBamTPcBTU9xs0MSNbB8vUG0B5SAW0TRcwTXbdyL3kHmQouoL0lQZZ57Yf8Bpr40q4NZiR8x0uUPK/W7SlRyzoi/+Ln/S2TqvJDzxWIN5IWX8McxRcPIPCitZVbE22Ow2xgKu5bu5WK33aIRRb7tBD+YvcqWR8qQuar0i5TBN/f/ZqDnJLXnIsKR7/mqv9VIUO/64vMBmju5USM7fZPHL8jeWQ==-----END CERTIFICATE-----'
+          permissions: 0o666
+          path: /usr/local/share/ca-certificates/kube-ca.crt
+          op: append
+    time:
+        disabled: false
+        servers:
+            - 10.231.1.34
+        bootTimeout: 2m0s

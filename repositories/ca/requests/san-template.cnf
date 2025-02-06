@@ -1,0 +1,24 @@
+[req]
+default_bits           = 2048
+default_md             = sha256
+distinguished_name     = req_distinguished_name
+req_extensions         = req_ext
+prompt                 = no
+
+[req_distinguished_name]
+countryName            = US
+stateOrProvinceName    = Florida
+localityName           = Tampa
+organizationName       = NGC
+organizationalUnitName = Calico
+commonName             =  
+
+[req_ext]
+extendedKeyUsage       = serverAuth
+keyUsage               = keyEncipherment, dataEncipherment
+subjectAltName         = @alt_names
+
+[alt_names]
+DNS.1                  = 
+DNS.2                  = 
+IP.1                   = 

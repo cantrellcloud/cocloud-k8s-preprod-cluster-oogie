@@ -69,25 +69,55 @@ In this guide, we'll walk you through the essential steps to set up, configure, 
 
 ### Resource Specifications
 
-- Physical Hardware
+- Physical
   - Dell Precision 3260
     - 13th Gen Intel(R) Core(TM) i9-13900 2.00 GHz
     - 32GB RAM
     - Windows 11 Enterprise 24H2
-- Hypervisor: Hyper-V
-  - Compute
-    - 2 vCPUs
-    - 1GB/4GB RAM Start/Max
-    - Ubuntu 24.04 LTS Minimal Installation
-  - Networking
-    - Host VLAN
-      - Nodes CIDR: 10.0.69.32/27
-    - Cluster VXLAN
-      - Pods CIDR: 172.16.69.32/27
-      - Service CIDR: 172.16.68.64/26
+- Virtual
+  - Network
+    - 10.0.69.32/27
   - Storage
     - NFS Share Server
     - NFS Share Clients
+  - Compute
+    - Administration
+      - kubeadmin
+      - kuberegistry
+    - Cluster Control Plane
+      - kubectrl01
+      - kubectrl02
+      - kubectrl03
+    - Cluster Worker Plane
+      - kubework01
+      - kubework02
+      - kubework03
+- Virtual Machine Specifications
+  - Hypervisor
+    - Hyper-V on Windows 11 Enterprise 24H2
+  - Compute
+    - Kube Administration
+      - 2 vCPUs
+      - 3GB/4GB RAM Start/Max
+      - 128GB Thin Provisioned HDD
+      - Ubuntu 24.04 LTS Desktop Installation
+    - Kube Registry
+      - 2 vCPUs
+      - 1GB/4GB RAM Start/Max
+      - 128GB Thin Provisioned HDD
+      - Ubuntu 24.04 LTS Minimal Installation
+    - Kube Control/Worker Machines
+      - 2 vCPUs
+      - 1GB/4GB RAM Start/Max
+      - 128GB Thin Provisioned HDD
+      - Ubuntu 24.04 LTS Minimal Installation
+  - Networking
+    - Host VLAN
+      - Nodes CIDR: 10.0.69.32/27
+    - Cluster Networking
+      - VXLAN
+        - Pods CIDR: 172.16.69.32/27
+        - Service CIDR: 172.16.68.64/26
 - Assumptions & Dependencies
   - It is assumed that K8s is being deployed in an on-premises and offline laboratory environment to ensure strict configuration control.
   - It is assumed that all administration will be initiated or pushed to K8s cluster control and worker nodes. All commands should be done remotely unless directed otherwise.
