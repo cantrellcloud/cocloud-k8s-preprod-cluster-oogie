@@ -18,7 +18,7 @@ COCloud K8s Development Cluster Oogie
 
 - [Deploying Kubernetes on Ubuntu 2024.04 LTS Build Guide](#deploying-kubernetes-on-ubuntu-202404-lts-build-guide)
   - [Introduction](#introduction)
-  - [Development Environment](#development-environment)
+  - [Infrastructure](#infrastructure)
     - [Resource Specifications](#resource-specifications)
     - [Logical Topology](#logical-topology)
     - [References, Tools, and Notes](#references-tools-and-notes)
@@ -26,37 +26,37 @@ COCloud K8s Development Cluster Oogie
         - [Repositories](#repositories)
         - [URLs](#urls)
       - [Tools](#tools)
+        - [Install Linux Integration Services (Hyper-V Tools)](#install-linux-integration-services-hyper-v-tools)
         - [Add Command Line Aliases](#add-command-line-aliases)
+        - [Set NTP Client](#set-ntp-client)
         - [Update OS and Install Tools](#update-os-and-install-tools)
+    - [Update hosts File](#update-hosts-file)
     - [Cluster Certificates](#cluster-certificates)
-      - [Kubernetes Cluster Certificate Authority](#kubernetes-cluster-certificate-authority)
-      - [Generate Kubernetes Cluster Intermediate Signing CA Certificate](#generate-kubernetes-cluster-intermediate-signing-ca-certificate)
-    - [Create and Configure Offline Registry](#create-and-configure-offline-registry)
+      - [Kubernetes Cluster Issuing Certificate Authority](#kubernetes-cluster-issuing-certificate-authority)
+  - [Configure Container Runtime Environment](#configure-container-runtime-environment)
+    - [Install Containerd](#install-containerd)
+      - [Configure cgroup drivers](#configure-cgroup-drivers)
+  - [Configure Cloned Machine](#configure-cloned-machine)
+  - [Create and Configure Offline Registry](#create-and-configure-offline-registry)
     - [Install Helm](#install-helm)
       - [Install Helm Charts](#install-helm-charts)
     - [Install NFS Shares](#install-nfs-shares)
-    - [Install Linux Integration Services (Hyper-V Tools)](#install-linux-integration-services-hyper-v-tools)
-  - [Kubernetes cluster system configuration and initialization](#kubernetes-cluster-system-configuration-and-initialization)
-    - [Verify the MAC address and product\_uuid are unique for every node](#verify-the-mac-address-and-product_uuid-are-unique-for-every-node)
-    - [Network Configuration](#network-configuration)
-    - [Set NTP Client](#set-ntp-client)
-    - [Update hosts File](#update-hosts-file)
-    - [Disable systemd-networkd-wait-online](#disable-systemd-networkd-wait-online)
-    - [Turn off swap now and make persistent across reboots](#turn-off-swap-now-and-make-persistent-across-reboots)
-    - [Download public signing key for kubernetes repositories](#download-public-signing-key-for-kubernetes-repositories)
-    - [add kubernetes apt repository](#add-kubernetes-apt-repository)
-    - [update apt index and install kubernetes packages](#update-apt-index-and-install-kubernetes-packages)
-    - [enable kubelet service](#enable-kubelet-service)
-    - [Update firewall rules](#update-firewall-rules)
-  - [Install Container Runtime](#install-container-runtime)
-    - [Install nerdctl Command Line Tool](#install-nerdctl-command-line-tool)
-    - [Install Containerd](#install-containerd)
-  - [Initialize Kubernetes Configuration](#initialize-kubernetes-configuration)
-    - [Pull kubeadm config images](#pull-kubeadm-config-images)
-    - [Initialize default configuration](#initialize-default-configuration)
-    - [Modify the kubelet](#modify-the-kubelet)
-    - [Install Calico network overlay](#install-calico-network-overlay)
-    - [Verify Kubernetes is running](#verify-kubernetes-is-running)
+  - [Kubernetes Cluster Configuration, Initialization, Networking](#kubernetes-cluster-configuration-initialization-networking)
+    - [Cluster Configuration](#cluster-configuration)
+      - [KubeRegistry Configuration](#kuberegistry-configuration)
+        - [Pull, Re-Tag, and Push Images](#pull-re-tag-and-push-images)
+      - [Verify the MAC Address and product\_uuid](#verify-the-mac-address-and-product_uuid)
+      - [IP Configuration](#ip-configuration)
+      - [Disable systemd-networkd-wait-online](#disable-systemd-networkd-wait-online)
+      - [Turn off swap now and make persistent across reboots](#turn-off-swap-now-and-make-persistent-across-reboots)
+      - [Update firewall rules](#update-firewall-rules)
+    - [Cluster Initialization](#cluster-initialization)
+      - [Pull kubeadm config images](#pull-kubeadm-config-images)
+      - [Initialize default configuration](#initialize-default-configuration)
+      - [Modify the kubelet](#modify-the-kubelet)
+    - [Cluster Networking](#cluster-networking)
+      - [Install Calico network overlay](#install-calico-network-overlay)
+    - [Verify Cluster Status](#verify-cluster-status)
     - [Add additional nodes to cluster and labels, taints, and tolerances](#add-additional-nodes-to-cluster-and-labels-taints-and-tolerances)
 
 ## Introduction
@@ -65,7 +65,7 @@ Kubernetes, often abbreviated as K8s, is an open-source platform designed to aut
 
 In this guide, we'll walk you through the essential steps to set up, configure, and deploy a single application on Kubernetes using VXLAN network features. We'll start with setting up a Kubernetes cluster, followed by configuring networking, necessary components and resources, and finally deploying the application. By the end of this guide, you'll have a solid understanding of the Kubernetes architecture and be well-equipped to begin containerizing applications in an Enterprise production environment.
 
-## Development Environment
+## Infrastructure
 
 ### Resource Specifications
 
@@ -121,7 +121,7 @@ In this guide, we'll walk you through the essential steps to set up, configure, 
 - Assumptions & Dependencies
   - It is assumed that K8s is being deployed in an on-premises and offline laboratory environment to ensure strict configuration control.
   - It is assumed that all administration will be initiated or pushed to K8s cluster control and worker nodes. All commands should be done remotely unless directed otherwise.
-  - It is assumed that the Intermediate Certificate Signing Request (CSR) generated by this deployment guide will be signed by an Enterprise Certificate Authority for K8s cluster certificate services.
+  - It is assumed that the Intermediate Certificate Signing Request (CSR) generated by this deployment guide will be signed by an Enterprise Certificate Authority or other third-party CA for K8s cluster certificate services.
   - It is assumed that static software and YAML files can be transferred from a bastion host into the offline environment.
   - It is assumed that all containers and images will be pulled from the Internet when the bastion host is connected to the external network, tagged with offline URL, then pushed to the offline registry.
   - It is assumed that all containers and images, when the bastion host is connected to the internal lab network, will be pulled from the offline registry.
@@ -185,9 +185,22 @@ download.nerdctl.com/linux/ubuntu
 
 #### Tools
 
+##### Install Linux Integration Services (Hyper-V Tools)
+
+```bash
+echo 'hv_vmbus' >> /etc/initramfs-tools/modules
+echo 'hv_storvsc' >> /etc/initramfs-tools/modules
+echo 'hv_blkvsc' >> /etc/initramfs-tools/modules
+echo 'hv_netvsc' >> /etc/initramfs-tools/modules
+apt update && apt upgrade -y && apt -y install linux-virtual linux-cloud-tools-virtual linux-tools-virtual
+update-initramfs -u
+reboot
+```
+
 ##### Add Command Line Aliases
 
 - For frequently used commands
+  - Not required on K8 control/worker nodes
 
 ```bash
 tee ~/.bash_aliases <<EOF
@@ -212,116 +225,563 @@ EOF
 source ~/.bash_aliases
 ```
 
+##### Set NTP Client
+
+```bash
+# The following will replace current network configuration
+
+tee /etc/systemd/timesyncd.conf <<EOF
+[Time]
+NTP=time.cantrelloffice.cloud
+EOF
+
+systemctl restart systemd-timesyncd
+wait 1500
+timedatectl timesync-status
+```
+
 ##### Update OS and Install Tools
 
 ```bash
+### Download public signing key for kubernetes repositories
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+### add kubernetes apt repository
+#This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+
+### update apt index and install required packages
 apt update && apt upgrade -y
-apt install -y kubelet kubeadm kubectl vim apt-transport-https ca-certificates curl gpg net-tools gnupg
+apt install -y kubelet kubeadm kubectl openssl ufw vim apt-transport-https ca-certificates curl gpg net-tools gnupg
 apt-mark hold kubelet kubeadm kubectl
 apt update && apt upgrade -y
+
+### enable kubelet service
+# the kubelet will restart every few seconds, as it waits in a crashloop for kubeadm to tell it what to do.
+
+# hostname: kubeimage
+systemctl enable --now kubelet
+
+# hostname: kubeadmin
+systemctl disable kubelet
+```
+
+- Generate SSH Key Id
+  - Run as non-root user
+
+```bash
+### generate ssh-key-id
+ssh-keygen -t rsa -b 4096
+
+### copy ssh-key-id to hosts
+ssh-copy-id kdmin@<hostname>
+```
+
+### Update hosts File
+
+```bash
+vi /etc/hosts
+```
+
+```bash
+10.0.69.51 kubectrl01.k8.cantrellcloud.net
+10.0.69.52 kubectrl02.k8.cantrellcloud.net
+10.0.69.53 kubectrl03.k8.cantrellcloud.net
+10.0.69.54 kubework01.k8.cantrellcloud.net
+10.0.69.55 kubework02.k8.cantrellcloud.net
+10.0.69.56 kubework03.k8.cantrellcloud.net
+10.0.69.57 kubework04.k8.cantrellcloud.net
+10.0.69.58 kubework05.k8.cantrellcloud.net
+10.0.69.59 kubework06.k8.cantrellcloud.net
+10.0.69.60 kubeimage.k8.cantrellcloud.net
+10.0.69.61 kuberegistry.k8.cantrellcloud.net
+10.0.69.62 kubeadmin.k8.cantrellcloud.net
+10.0.69.51 kubectrl01.cantrellcloud.net
+10.0.69.52 kubectrl02.cantrellcloud.net
+10.0.69.53 kubectrl03.cantrellcloud.net
+10.0.69.54 kubework01.cantrellcloud.net
+10.0.69.55 kubework02.cantrellcloud.net
+10.0.69.56 kubework03.cantrellcloud.net
+10.0.69.57 kubework04.cantrellcloud.net
+10.0.69.58 kubework05.cantrellcloud.net
+10.0.69.59 kubework06.cantrellcloud.net
+10.0.69.60 kubeimage.cantrellcloud.net
+10.0.69.61 kuberegistry.cantrellcloud.net
+10.0.69.62 kubeadmin.cantrellcloud.net
 ```
 
 ### Cluster Certificates
 
 This deployment uses a custom PKI configuration that will generate a Certificate Signing Request (CSR) to be signed by an external Root Certificate Authority. The certificate authority created by this deployment will be a Subordinate CA used for signing all certificates requested and signed for use solely by the deployed Kubernetes cluster.
 
-#### Kubernetes Cluster Certificate Authority
+#### Kubernetes Cluster Issuing Certificate Authority
+
+- The Certificate Authority should be installed on a PRIV access Ubuntu management workstation
+- Create Openssl configuration file to create subordinate CA certificate request
+  - Generating a Certificate Signing Request (CSR) for a Subject Alternative Name (SAN) certificate using OpenSSL with a configuration file involves a few steps. Here's a guide to help you through the process:
+
+- Create the CA Request on Ubuntu
+  - Configure Your CA: Update your OpenSSL configuration to use the new CA certificate and key
 
 - Create the CA folder structure
 
 ```bash
-  sudo -i
-  mkdir /opt/ca
-  mkdir /opt/ca/certs
-  mkdir /opt/ca/crl
-  mkdir /opt/ca/newcerts
-  mkdir /opt/ca/private
-  mkdir /opt/ca/requests
-
-  touch /opt/ca/index.txt
-  echo '1000' /opt/ca/serial
+mkdir /opt/ca
+mkdir /opt/ca/certs
+mkdir /opt/ca/crl
+mkdir /opt/ca/newcerts
+mkdir /opt/ca/private
+mkdir /opt/ca/requests
+touch /opt/ca/index.txt
+echo 1000 > /opt/ca/serial
 ```
 
 - Set strict permissions of the CA folder
 
 ```bash
-  chmod 600 /opt/ca
+chmod 600 /opt/ca
 ```
 
-- Generate the CA private key and create CA CSR
+- Create Openssl configuration file to create CA certificate request
 
 ```bash
-  cd /opt/ca
-  openssl genrsa -aes256 -out private/cakey.pem 4096
-  openssl req -new -x509 -key /opt/ca/cakey.pem -out cacert.pem -days 3650
-  cd /opt/requests
-```
+tee /opt/ca/requests/cacert-openssl.cnf <<EOF
+[ ca ]
+default_ca = CA_default
 
-- Set CA folder as the CA_default for openssl
+[ CA_default ]
+dir = /opt/ca
+certs = $dir/certs
+crl_dir = $dir/crl
+database = $dir/index.txt
+new_certs_dir = $dir/newcerts
+certificate = $dir/cacert.pem
+serial = $dir/serial
+crlnumber = $dir/crlnumber
+crl = $dir/crl.pem
+private_key = $dir/private/cakey.pem
+RANDFILE = $dir/private/.rand
+default_days = 3650
+
+[ req ]
+default_bits = 4096
+default_md = sha256
+distinguished_name = req_distinguished_name
+x509_extensions = v3_ca
+string_mask = utf8only
+
+[ req_distinguished_name ]
+countryName = Country Name (2 letter code)
+countryName_default = US
+stateOrProvinceName = State or Province Name (full name)
+stateOrProvinceName_default = Florida
+localityName = Locality Name (eg, city)
+localityName_default = New Port Richey
+organizationName = Organization Name (eg, company)
+organizationName_default = Cantrell Cloud ES
+commonName = Common Name (eg, YOUR name)
+commonName_default = Cantrell Cloud Kubernetes Certificate Authority 01
+
+[ v3_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical,CA:true
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+EOF
+```
 
 ```bash
-  sed vi /usr/lib/ssl/openssl.cnf # [CA_default] dir = /opt/ca # Where everything is kept
+tee /opt/ca/requests/subca-cacert-openssl.cnf <<EOF
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir = /opt/ca
+certs = $dir/certs
+crl_dir = $dir/crl
+database = $dir/index.txt
+new_certs_dir = $dir/newcerts
+certificate = $dir/cacert.pem
+serial = $dir/serial
+crlnumber = $dir/crlnumber
+crl = $dir/crl.pem
+private_key = $dir/private/cakey.pem
+RANDFILE = $dir/private/.rand
+default_days = 3650
+
+[ req ]
+default_bits = 4096
+default_md = sha256
+distinguished_name = req_distinguished_name
+x509_extensions = v3_ca
+string_mask = utf8only
+
+[ req_distinguished_name ]
+countryName = Country Name (2 letter code)
+countryName_default = US
+stateOrProvinceName = State or Province Name (full name)
+stateOrProvinceName_default = Florida
+localityName = Locality Name (eg, city)
+localityName_default = New Port Richey
+organizationName = Organization Name (eg, company)
+organizationName_default = Cantrell Cloud ES
+commonName = Common Name (eg, YOUR name)
+commonName_default = Cantrell Cloud Kubernetes Issuing Certificate Authority 01
+
+[ v3_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical,CA:true
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+EOF
 ```
 
-#### Generate Kubernetes Cluster Intermediate Signing CA Certificate
+- Generate CA/Root Certificate Request
 
-- ca
+- Generate CA Private Key:
 
 ```bash
-openssl genrsa -out devca.key
-openssl req -new -key devca.key -subj "/CN=Cantrell Cloud Kubernetes CA" -out devca.csr
-  
-sign the csr with Cantrell Cloud Signing CA
+openssl genrsa \
+  -aes256 \
+  -out /opt/ca/private/cakey.pem \
+  4096
 ```
-
-- create certificate request
 
 ```bash
-  openssl req 
-   -out offline-registry.csr 
-   -newkey rsa:2048 
-   -nodes 
-   -keyout /opt/ca/private/offline-registry-key.pem 
-   -extensions req_ext 
-   -config offline-registry-san.cnf
+# subj Cantrell Cloud Kubernetes Certificate Authority 01
+openssl req -new -x509 \
+  -days 3650 \
+  -extensions v3_ca \
+  -out /opt/ca/cacert.pem \
+  -key /opt/ca/private/cakey.pem \
+  -config /opt/ca/requests/cacert-openssl.cnf
 ```
 
-- get certificate request signed by CA
+- Generate SubCA/Root Certificate Request
+  - To be installed on kubeadmin.k8.cantrellcloud.net
+
+- Generate subCA Private Key:
 
 ```bash
-  openssl ca \
-   -in offline-registry.csr \
-   -out offline-registry.crt \
-   -extensions req_ext \
-   -extfile offline-registry-san.cnf
+openssl genrsa \
+  -aes256 \
+  -out /opt/ca/private/subca-cakey.pem \
+  4096
 ```
-
-- merge subca.crt and cacert.pem
 
 ```bash
-  cat /opt/certs/offline-registry.crt \
-  /opt/ca/cacert.pem > \
-  /opt/ca/certs/offline-registry-chained.crt
+# subj Cantrell Cloud Kubernetes Issuing Certificate Authority 01
+
+
+
+
+
+openssl req -new \
+  -extensions v3_ca \
+  -out /opt/ca/requests/subca-cacert.csr \
+  -key /opt/ca/private/subca-cakey.pem \
+  -config /opt/ca/requests/subca-cacert-openssl.cnf
+
+openssl x509 -req \
+  -in /opt/ca/requests/subca-cacert.csr \
+  -CA /opt/ca/cacert.pem \
+  -CAkey /opt/ca/private/cakey.pem \
+  -out /opt/ca/certs/subca-cacert.crt \
+  -extensions v3_ca \
+  -extfile /opt/ca/requests/cacert-openssl.cnf
+
+cat /opt/ca/certs/subca-cacert.crt /opt/ca/private/subca-cakey.pem > /opt/ca/certs/subca-cacert.pem
+
 ```
 
-### Create and Configure Offline Registry
+-------------------------------------------------------------------------------
+
+- Copy new certificate to ca-certificates and update ca-certificates
 
 ```bash
-nerdctl run -d -p 6000:5000 --restart always --name registry-airgapped registry:2
- 1bf09802bee1476bc463d972c686f90a64640d87dacce1ac8485585de69c91a5
-for image in `talosctl image default`; do nerdctl pull $image; done
-for image in `talosctl image default`; do \
-    nerdctl tag $image `echo $image | sed -E 's#^[^/]+/#127.0.0.1:6000/#'`; \
-  done
-
-for image in `talosctl image default`; do \
-    nerdctl push `echo $image | sed -E 's#^[^/]+/#127.0.0.1:6000/#'`; \
-    done
-
-for image in $(cat talosctl-images.list) ; do \
-    nerdctl tag $image `echo $image | sed -E 's#^[^/]+/#127.0.0.1:6000/#'`; \
-  done
+cp /opt/ca/certs/subca-cacert.pem \
+  /usr/local/share/ca-certificates/Cantrell-Cloud-Kubernetes-Certificate-Authority-01.crt
+cp /opt/ca/cacert.pem \
+  /usr/local/share/ca-certificates/Cantrell-Cloud-Kubernetes-Issuing-Certificate-Authority-01.crt
+update-ca-certificates --verbose
 ```
+
+Copy cocloud-kube-cluster-subCA-01.crt to all COCloud Kubernetes Cluster hosts, control nodes, and worker nodes
+
+```bash
+scp /usr/local/share/ca-certificates/Cantrell-Cloud-Kubernetes-Certificate-Authority-01.crt \
+  kadmin@kubeimage.k8.cantrellcloud.net:/home/kadmin/kubeconf/certs/Cantrell-Cloud-Kubernetes-Certificate-Authority-01.crt
+scp /usr/local/share/ca-certificates/Cantrell-Cloud-Kubernetes-Issuing-Certificate-Authority-01.crt \
+  kadmin@kubeimage.k8.cantrellcloud.net:/home/kadmin/kubeconf/certs/Cantrell-Cloud-Kubernetes-Issuing-Certificate-Authority-01.crt
+```
+
+- Create KubeRegistry SAN Configuration File
+  - This file can also be used as a template for server certificates
+
+```bash
+# kuberegistry certificate configuration
+tee /opt/ca/requests/kuberegistry-san.cnf <<EOF
+[req]
+default_bits           = 2048
+default_md             = sha256
+distinguished_name     = req_distinguished_name
+req_extensions         = req_ext
+prompt                 = no
+string_mask            = utf8only
+
+[req_distinguished_name]
+countryName            = US
+stateOrProvinceName    = Florida
+localityName           = New Port Richey
+organizationName       = Cantrell Cloud ES
+organizationalUnitName = InfoSys
+commonName             = kuberegistry.k8.cantrellcloud.net
+
+[req_ext]
+extendedKeyUsage       = serverAuth
+keyUsage               = keyEncipherment, dataEncipherment
+subjectAltName         = @alt_names
+
+[alt_names]
+DNS.1                  = kuberegistry.k8.cantrellcloud.net
+DNS.2                  = kuberegistry.cantrellcloud.net
+IP.1                   = 10.0.69.61
+EOF
+
+# kubeadmin certificate configuration
+tee /opt/ca/requests/kubeadmin-san.cnf <<EOF
+[req]
+default_bits           = 2048
+default_md             = sha256
+distinguished_name     = req_distinguished_name
+req_extensions         = req_ext
+prompt                 = no
+string_mask            = utf8only
+
+[req_distinguished_name]
+countryName            = US
+stateOrProvinceName    = Florida
+localityName           = New Port Richey
+organizationName       = Cantrell Cloud ES
+organizationalUnitName = InfoSys
+commonName             = kubeadmin.k8.cantrellcloud.net
+
+[req_ext]
+extendedKeyUsage       = serverAuth
+keyUsage               = keyEncipherment, dataEncipherment
+subjectAltName         = @alt_names
+
+[alt_names]
+DNS.1                  = kubeadmin.k8.cantrellcloud.net
+DNS.2                  = kubeadmin.cantrellcloud.net
+IP.1                   = 10.0.69.62
+EOF
+```
+
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+
+- Server/Client Certificates
+  - Create certificate request
+- This process will create a CSR that includes the SANs specified in the configuration file
+
+```bash
+# kuberegistry certificate
+cd /opt/ca/requests
+openssl req \
+  -out kuberegistry.csr \
+  -newkey rsa:2048 \
+  -nodes \
+  -keyout /opt/ca/private/kuberegistry-key.pem \
+  -extensions req_ext \
+  -config kuberegistry-san.cnf
+
+openssl ca \
+  -in kuberegistry.csr \
+  -out /opt/ca/certs/kuberegistry.crt \
+  -extensions req_ext \
+  -extfile kuberegistry-san.cnf
+
+cat /opt/ca/certs/kuberegistry.crt /opt/ca/private/kuberegistry-key.pem > /opt/ca/certs/kuberegistry.pem
+```
+
+```bash
+# kubeadmin certificate
+cd /opt/ca/requests
+openssl req \
+  -out kubeadmin.csr \
+  -newkey rsa:2048 \
+  -nodes \
+  -keyout /opt/ca/private/kubeadmin-key.pem \
+  -extensions req_ext \
+  -config kubeadmin-san.cnf
+
+openssl ca \
+  -in kubeadmin.csr \
+  -out /opt/ca/certs/kubeadmin.crt \
+  -extensions req_ext \
+  -extfile kubeadmin-san.cnf
+
+cat /opt/ca/certs/kubeadmin.crt /opt/ca/private/kubeadmin-key.pem > /opt/ca/certs/kubeadmin.pem
+```
+
+-------------------------------------------------------------------------------
+
+## Configure Container Runtime Environment
+
+- Only required on Kubernetes control or worker nodes
+
+- create containerd.conf
+
+```bash
+tee /etc/modules-load.d/containerd.conf <<EOF
+overlay
+br_netfilter
+EOF
+modprobe overlay
+modprobe br_netfilter
+```
+
+- create kube.conf
+
+```bash
+tee /etc/sysctl.d/kube.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+
+sysctl --system
+```
+
+- Verify that net.ipv4.ip_forward is set to 1 with:
+
+```bash
+sysctl net.ipv4.ip_forward
+
+```
+
+### Install Containerd
+
+- Download containerd from <https://github.com/containerd/containerd/releases>
+- Download runc.amd64 from <https://github.com/opencontainers/runc/releases>
+- Download cni-plugins from <https://github.com/containernetworking/plugins/releases>
+- Download containerd.service from <https://raw.githubusercontent.com/containerd/containerd/main/containerd.service>
+- Download nerdctl from <https://github.com/containerd/nerdctl/releases>
+
+```bash
+# containerd binaries
+tar Cxzvf /usr/local /home/kadmin/kubeconf/containerd/containerd-2.0.2-linux-amd64.tar.gz
+
+# runc binaries
+install -m 755 /home/kadmin/kubeconf/containerd/runc.amd64 /usr/local/sbin/runc
+
+# cni-plugins
+mkdir -p /opt/cni/bin
+tar Cxzvf /opt/cni/bin /home/kadmin/kubeconf/containerd/cni-plugins-linux-amd64-v1.6.2.tgz
+
+# containerd.service
+mkdir -p /usr/local/lib/systemd/system
+cp /home/kadmin/kubeconf/containerd/containerd.service /usr/local/lib/systemd/system/containerd.service
+systemctl daemon-reload
+systemctl enable --now containerd
+
+# nerdctl
+tar Cxzvvf /usr/local/bin /home/kadmin/kubeconf/containerd/nerdctl-2.0.3-linux-amd64.tar.gz
+
+# Configure service to start automatically & check to make sure it is running
+
+systemctl restart containerd
+systemctl enable containerd
+systemctl status containerd
+```
+
+#### Configure cgroup drivers
+
+Note: I did not configure the following
+
+- configure the system so it starts using systemd as cgroup
+
+```bash
+mkdir -p /etc/containerd
+containerd config default | tee /etc/containerd/config.toml >/dev/null 2>&1
+```
+
+- verify containerd config file - still need to work on this
+
+```bash
+cat /etc/containerd/config.toml
+```
+
+```text
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+SystemdCgroup = true
+```
+
+- Confirm cgroup v2
+
+```bash
+cat /etc/default/grub | grep systemd.unified_cgroup_hierarchy
+```
+
+- Enable non-root cpu, cpuset, and i/o delegation - run as non-root user on k8s-controllers
+
+```bash
+sudo mkdir -p /etc/systemd/system/user@.service.d
+cat <<EOF | sudo tee /etc/systemd/system/user@.service.d/delegate.conf
+[Service]
+Delegate=cpu cpuset io memory pids
+EOF
+sudo systemctl daemon-reload
+
+cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.controllers  - run as non-root user on k8s-controllers
+```
+
+-------------------------------------------------------------------------------
+
+## Configure Cloned Machine
+
+- After cloning
+
+```bash
+hostnamectl set-hostname [nethostname]
+rm /etc/machine-id
+systemd-machine-id-setup
+```
+
+- Change IP Settings
+
+-------------------------------------------------------------------------------
+
+## Create and Configure Offline Registry
+
+```bash
+# Start/Create Registry Container
+# run container
+mkdir -p /opt/kuberegistry
+mkdir -p /opt/kuberegistry/certs
+mkdir -p /opt/kuberegistry/data
+cd /opt/kuberegistry
+cp /home/kadmin/kubeconf/certs/kuberegistry.crt /opt/kuberegistry/certs/kuberegistry.crt
+cp /home/kadmin/kubeconf/certs/kuberegistry-key.pem /opt/kuberegistry/certs/kuberegistry-key.pem
+tee build.sh <<EOF
+#!/usr/bin/env bash
+nerdctl run -d \
+ --restart always \
+ --name kuberegistry \
+ -v "$(pwd)"/certs:/certs \
+ -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
+ -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/kuberegistry.crt \
+ -e REGISTRY_HTTP_TLS_KEY=/certs/kuberegistry-key.pem \
+ -e /data:/var/lib/registry \
+ -p 443:443 \
+ registry:2
+EOF
+chmod +x /opt/kuberegistry/build.sh
+```
+
+-------------------------------------------------------------------------------
 
 ### Install Helm
 
@@ -374,23 +834,41 @@ for image in $(cat talosctl-images.list) ; do \
   reboot
 ```
 
-### Install Linux Integration Services (Hyper-V Tools)
-
-```bash
-echo 'hv_vmbus' >> /etc/initramfs-tools/modules
-echo 'hv_storvsc' >> /etc/initramfs-tools/modules
-echo 'hv_blkvsc' >> /etc/initramfs-tools/modules
-echo 'hv_netvsc' >> /etc/initramfs-tools/modules
-apt update && apt upgrade -y && apt -y install linux-virtual linux-cloud-tools-virtual linux-tools-virtual
-update-initramfs -u
-reboot
-```
-
 -------------------------------------------------------------------------------
 
-## Kubernetes cluster system configuration and initialization
+## Kubernetes Cluster Configuration, Initialization, Networking
 
-### Verify the MAC address and product_uuid are unique for every node
+### Cluster Configuration
+
+#### KubeRegistry Configuration
+
+##### Pull, Re-Tag, and Push Images
+
+- Pull Images
+
+```bash
+for image in `cat /home/kadmin/kubeconf/kuberegistry/offline-images.list`; do echo $image; nerdctl pull $image; done
+```
+
+- Re-Tag Images
+
+```bash
+for image in `cat /home/kadmin/kubeconf/kuberegistry/offline-images.list`; do echo $image; nerdctl tag $image `echo $image | sed -E 's#^[^/]+/#kuberegistry.k8.cantrellcloud.net/#'`; done
+```
+
+- Push Images
+
+```bash
+for image in `cat /home/kadmin/kubeconf/kuberegistry/offline-images.list`; do echo $image; nerdctl push `echo $image | sed -E 's#^[^/]+/#kuberegistry.k8.cantrellcloud.net/#'`; done
+```
+
+- Verify Images are Pushed
+
+```bash
+curl https://offline-registry.dev.local/v2/_catalog
+```
+
+#### Verify the MAC Address and product_uuid
 
 You can get the MAC address of the network interfaces using the command
 
@@ -404,7 +882,7 @@ You can get the MAC address of the network interfaces using the command
  ifconfig -a
 ```
 
-### Network Configuration
+#### IP Configuration
 
 - Set Interfaces - only if required
 
@@ -449,39 +927,7 @@ netplan try
 cat /sys/class/dmi/id/product_uuid
 ```
 
-### Set NTP Client
-
-```bash
-# The following will replace current network configuration
-
-tee /etc/systemd/timesyncd.conf <<EOF
-[Time]
-NTP=time.cantrelloffice.cloud
-EOF
-
-systemctl restart systemd-timesyncd
-wait 1500
-timedatectl timesync-status
-```
-
-### Update hosts File
-
-```bash
-vi /etc/hosts
-```
-
-```bash
-10.0.69.50 kubeadmin.cantrellcloud.net
-10.0.69.51 kubectrl01.cantrellcloud.net
-10.0.69.52 kubectrl02.cantrellcloud.net
-10.0.69.53 kubectrl03.cantrellcloud.net
-10.0.69.56 kubework01.cantrellcloud.net
-10.0.69.55 kubework02.cantrellcloud.net
-10.0.69.56 kubework03.cantrellcloud.net
-10.0.69.62 offline-registry
-```
-
-### Disable systemd-networkd-wait-online
+#### Disable systemd-networkd-wait-online
 
 ```bash
 /lib/systemd/system/systemd-networkd-wait-online.service
@@ -495,7 +941,7 @@ RemainAfterExit=yes
 TimeoutStartSec=5sec
 ```
 
-### Turn off swap now and make persistent across reboots
+#### Turn off swap now and make persistent across reboots
 
 ```bash
 swapoff-a
@@ -507,46 +953,12 @@ swapoff-a
 vi /etc/fstab
 ```
 
-### Download public signing key for kubernetes repositories
-
-```bash
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-```
-
-### add kubernetes apt repository
-
-This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
-
-```bash
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
-```
-
-### update apt index and install kubernetes packages
-
-```bash
-apt-get update
-apt-get
-```
-
-### enable kubelet service
-
-- the kubelet will restart every few seconds, as it waits in a crashloop for kubeadm to tell it what to do.
-
-```bash
-systemctl enable --now kubelet
-```
-
-### Update firewall rules
-
-- All Nodes
-
-```bash
-apt install -y ufw
-```
+#### Update firewall rules
 
 - Control Plane rules
 
 ```bash
+# set rules
 ufw allow 22/tcp
 ufw allow 6443/tcp
 ufw allow 2379/tcp
@@ -556,131 +968,36 @@ ufw allow 10248/tcp
 ufw allow 10250/tcp
 ufw allow 10259/tcp
 ufw allow 10257/tcp
+# enable firewall
+ufw enable
+# check firewall status
+ufw status verbose
 ```
 
 - Worker Nodes rules
 
 ```bash
+# set rules
 ufw allow 22/tcp
 ufw allow 5473/tcp
 ufw allow 10250/tcp
 ufw allow 10256/tcp
 ufw allow 30000:32767/tcp
-```
-
-- All Nodes
-
-```bash
+# enable firewall
 ufw enable
-```
-
-- check firewall status
-
-```bash
+# check firewall status
 ufw status verbose
 ```
 
-## Install Container Runtime
+-------------------------------------------------------------------------------
 
-- create containerd.conf
+### Cluster Initialization
 
-```bash
-tee /etc/modules-load.d/containerd.conf <<EOF
-overlay
-br_netfilter
-EOF
-modprobe overlay
-modprobe br_netfilter
-```
+Use scripts to create a cluster configuration and build cluster master control and 3 worker nodes
 
-- create kube.conf
+-------------------------------------------------------------------------------
 
-```bash
-tee /etc/sysctl.d/kube.conf <<EOT
-net.bridge.bridge-nf-call-ip6tables = 1
-net.bridge.bridge-nf-call-iptables = 1
-net.ipv4.ip_forward = 1
-EOT
-
-sysctl --system
-```
-
-### Install nerdctl Command Line Tool
-
-- Download and extract nerdctl's binaries
-
-```bash
-cd $HOME
-wget https://github.com/containerd/nerdctl/releases/download/v2.0.2/nerdctl-2.0.2-linux-amd64.tar.gz
-tar Cxzvvf /usr/local/bin nerdctl-2.0.2-linux-amd64.tar.gz
-```
-
-- Enable/confirm cgroup v2
-
-```bash
-cat /etc/default/grub | grep systemd.unified_cgroup_hierarchy
-```
-
-- enable non-root cpu, cpuset, and i/o delegation - run as non-root user on k8s-controllers
-
-```bash
-sudo mkdir -p /etc/systemd/system/user@.service.d
-cat <<EOF | sudo tee /etc/systemd/system/user@.service.d/delegate.conf
-[Service]
-Delegate=cpu cpuset io memory pids
-EOF
-sudo systemctl daemon-reload
-
-cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.controllers  - run as non-root user on k8s-controllers
-```
-
-### Install Containerd
-
-- Follow this for now:
-  - <https://github.com/containerd/containerd/blob/main/docs/getting-started.md>
-
-```bash
-tar Cxzvf /usr/local containerd-x.x.x-linux-amd64.tar.gz
-
-sudo install -m 755 runc.amd64 /usr/local/sbin/runc
-
-mkdir -p /opt/cni/bin
-sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
-
-sudo cp containerd.service /usr/local/lib/systemd/system/
-
-systemctl daemon-reload
-systemctl enable --now containerd
-```
-
-configure the system so it starts using systemd as cgroup - still need to work on this
-
-```bash
-containerd config default | tee /etc/containerd/config.toml >/dev/null 2>&1
-```
-
-verify containerd config file - still need to work on this
-
-```bash
-cat /etc/containerd/config.toml
-```
-
-```text
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-SystemdCgroup = true
-```
-
-- Setup the service to start automatically and check to make sure it is running
-
-```bash
-systemctl restart containerd
-systemctl enable containerd
-systemctl status containerd
-```
-
-## Initialize Kubernetes Configuration
-
-### Pull kubeadm config images
+#### Pull kubeadm config images
 
 - Pull kubeadm default config - only on one of the controllers
 
@@ -689,7 +1006,7 @@ sysctl --system
 kubeadm config images pull
 ```
 
-### Initialize default configuration
+#### Initialize default configuration
 
 - Initialize default configuration
   - If building an image, this is a good time to take snapshot 1
@@ -706,7 +1023,7 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-### Modify the kubelet
+#### Modify the kubelet
 
 ConfigMap
 Should be set, run command to verify cgroupDriver: systemd
@@ -722,7 +1039,9 @@ kubectl label node kubectrl02 node-role.kubernetes.io/control-plane=
 kubectl label node kubework01 node-role.kubernetes.io/worker=
 ```
 
-### Install Calico network overlay
+### Cluster Networking
+
+#### Install Calico network overlay
 
 ```bash
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/tigera-operator.yaml
@@ -783,7 +1102,7 @@ spec:
   vxlanMode: CrossSubnet
 ```
 
-### Verify Kubernetes is running
+### Verify Cluster Status
 
 ```bash
 kubectl get nodes

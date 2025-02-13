@@ -1,5 +1,94 @@
 # Enterprise Infrastructure
 
+## Overview
+
+### Slide 1: **Introduction**
+
+- **Title:** Enterprise Kubernetes High-Availability Multi-Cluster Platform
+- **Subtitle:** Overview Architecture based on DoDAF OV-1 Standards
+- **Presented by:** [Your Name], Lead Systems Engineer
+- **Date:** [Presentation Date]
+
+---
+
+### Slide 2: **Objective**
+
+- **Goal:** To provide a high-level overview of the architecture for an Enterprise Kubernetes High-Availability Multi-Cluster platform using VMware Tanzu Platform 10 on VMware vSphere ESXi.
+- **Scope:** Focus on operational concepts, key components, and interactions.
+
+---
+
+### Slide 3: **Operational Concept (OV-1)**
+
+- **Mission:** Ensure high availability, scalability, and efficient management of containerized applications.
+- **Key Players:** Systems Engineers, Network Engineers, DevOps Teams, Security Teams.
+- **High-Level Operations:** Deployment, management, monitoring, and scaling of Kubernetes clusters.
+
+---
+
+### Slide 4: **Architecture Overview**
+
+- **Components:**
+  - **VMware Tanzu Platform 10:** Containerized application runtime and management platform[1](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform/10-0.html).
+  - **VMware vSphere ESXi Cluster:** Provides compute, memory, and network resources[2](https://www.nakivo.com/blog/configuring-vmware-esxi-cluster/)[3](https://www.logicmonitor.com/blog/what-is-an-esxi-cluster-and-how-do-you-cluster-esxi-servers).
+  - **Kubernetes Clusters:** Managed by Tanzu Kubernetes Grid.
+- **Interactions:**
+  - **vCenter Server:** Centralized management of ESXi hosts and VMs.
+  - **Tanzu Mission Control:** Unified management of Kubernetes clusters.
+
+---
+
+### Slide 5: **High Availability and Scalability**
+
+- **High Availability:**
+  - **vSphere HA:** Protects VMs against host failures[2](https://www.nakivo.com/blog/configuring-vmware-esxi-cluster/).
+  - **Kubernetes HA:** Ensures application availability through multiple replicas.
+- **Scalability:**
+  - **vSphere DRS:** Balances workloads across ESXi hosts[2](https://www.nakivo.com/blog/configuring-vmware-esxi-cluster/).
+  - **Kubernetes Autoscaling:** Automatically adjusts the number of pods based on demand.
+
+---
+
+### Slide 6: **Security and Compliance**
+
+- **Security Measures:**
+  - **Network Segmentation:** Isolate sensitive workloads.
+  - **Access Controls:** Role-based access control (RBAC) for Kubernetes.
+  - **Data Encryption:** Encrypt data at rest and in transit.
+- **Compliance:**
+  - **Adherence to DoD Standards:** Ensure compliance with DoD security and operational guidelines[4](https://dodcio.defense.gov/Library/DoD-Architecture-Framework/dodaf20_ov1/).
+
+---
+
+### Slide 7: **Spanning a Network Service Mesh Across Data Centers**
+
+- **Objective:** Enable seamless communication and management of services across multiple data centers.
+- **Key Components:**
+  - **Network Service Mesh (NSM):** Facilitates connectivity, security, and observability for workloads across clusters and data centers[1](https://networkservicemesh.io/).
+  - **Data Center Interconnect (DCI):** Ensures reliable and secure connections between data centers[2](https://www.cisco.com/c/en/us/td/docs/solutions/Enterprise/Data_Center/DC_Infra2_5/DCI_SRND_2_5a_book/DCInfra_5a.html).
+- **Architecture:**
+  - **Multi-Cluster Connectivity:** NSM allows Kubernetes pods to communicate across clusters using virtual wires (vWires)[3](https://networkservicemesh.io/docs/concepts/architecture/).
+  - **Service Mesh Integration:** Integrate with traditional service meshes (e.g., Istio, Linkerd) for enhanced service-to-service communication[4](https://aws.amazon.com/what-is/service-mesh/).
+- **Benefits:**
+  - **High Availability:** Redundant paths and failover mechanisms ensure continuous service availability.
+  - **Scalability:** Easily scale services across data centers to meet demand.
+  - **Security:** Enforce zero-trust security models and isolate sensitive workloads[1](https://networkservicemesh.io/).
+- **Use Cases:**
+  - **Disaster Recovery:** Seamless failover of services between data centers.
+  - **Load Balancing:** Distribute workloads across multiple data centers for optimal performance.
+  - **Compliance:** Maintain data sovereignty and adhere to regional regulations[5](https://www.spanning.com/spanning-global-data-centers/).
+
+### Slide 8: **Conclusion and Next Steps**
+
+- **Summary:** Recap of the high-level architecture and its benefits.
+- **Next Steps:**
+  - Detailed design and implementation planning.
+  - Team training and knowledge transfer.
+  - Pilot deployment and testing.
+
+---
+---
+
 ## Key Service Resilincy - Foundation Infrastructure
 
 ### VMware Tanzu Platform

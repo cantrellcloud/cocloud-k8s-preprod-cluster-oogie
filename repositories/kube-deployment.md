@@ -64,12 +64,9 @@ cat /opt/ca/certs/offline-registry.crt \
 /opt/ca/certs/offline-registry-chained.crt
 
 # create subCA
-openssl genrsa -aes256 -out /opt/ca/private/kubedev-cluster-subCA-key.pem 4096
-openssl req -new -extensions v3_ca -key /opt/ca/private/kubedev-cluster-subCA-key.pem -out kubedev-cluster-subCA-cert.csr -days 3650
 cat /opt/ca/certs/kubedev-cluster-subCA.crt /opt/ca/cacert.pem > /opt/ca/certs/kubedev-cluster-subCA-chained.crt
 cp /opt/ca/certs/kubedev-cluster-subCA-chained.crt /usr/local/share/ca-certificates/kubedev-cluster-subCA-chained.pem
 update-ca-certificates
-
 
 ###############################################################################
 # Cluster Initialization
@@ -307,10 +304,6 @@ sudo kubeadm init --skip-phases certs --config /home/adminlocal/kubernetes/kubea
 # setup kubectl access to cluster
 scp /etc/kubernetes/admin.conf adminlocal@kubeadmin.dev.local:$HOME/.kube/config
 
-
-###############################################################################
-# 
-#
 
 
 ###############################################################################
