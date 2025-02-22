@@ -1,0 +1,45 @@
+version: "'2'"
+services:
+  wordpress:
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: grep -hv 'local_address' /proc/net/tcp6 /proc/net/tcp | awk 'function hextodec(str,ret,n,i,k,c){ret = 0;n = length(str);for (i = 1; i <= n; i++) {c = tolower(substr(str, i, 1));k = index("123456789abcdef", c);ret = ret * 16 + k}return ret} {print hextodec(substr($$2,index($$2,":")+1,4))}' | grep 9000 || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 30
+      start_period: 40s
+    image: wordpress:6.5-fpm@sha256:54072b0acb9a1e33acb5363fede77f50402be114be1d012315095818a020ff3e
+    labels:
+      com.webstation.type: thirdparty
+    sysctls:
+      net.core.somaxconn: 65535
+    volumes:
+      - /volume3/web/eaa791org-prod:/var/www/syno
+    environment:
+      WORDPRESS_DB_HOST: database
+      WORDPRESS_DB_NAME: eaa791orgdb
+      WORDPRESS_DB_PASSWORD: aUR@MesUyWKB!2^BVc
+      WORDPRESS_DB_USER: eaa791dbadmin
+  system:
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    image: busybox
+    tty: true
+  database:
+    image: mariadb:11.4@sha256:e59ba8783bf7bc02a4779f103bb0d8751ac0e10f9471089709608377eded7aa8
+    volumes:
+      - /var/services/web_packages/docker/mariadb/eaa791org-prod:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: eaa791orgdb
+      MYSQL_USER: eaa791dbadmin
+      MYSQL_PASSWORD: aUR@MesUyWKB!2^BVc
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    healthcheck:
+      test: mariadb -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e'quit' || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 60
+      start_period: 40s

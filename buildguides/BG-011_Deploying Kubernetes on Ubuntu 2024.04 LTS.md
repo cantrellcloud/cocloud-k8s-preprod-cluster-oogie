@@ -32,7 +32,10 @@ COCloud K8s Development Cluster Oogie
         - [Update OS and Install Tools](#update-os-and-install-tools)
     - [Update hosts File](#update-hosts-file)
     - [Cluster Certificates](#cluster-certificates)
-      - [Kubernetes Cluster Issuing Certificate Authority](#kubernetes-cluster-issuing-certificate-authority)
+      - [COCloud Kubernetes Cluster Issuing Certificate Authority](#cocloud-kubernetes-cluster-issuing-certificate-authority)
+    - [Create Kubernetes SubCA Initialization Script](#create-kubernetes-subca-initialization-script)
+    - [On the issuing CA server](#on-the-issuing-ca-server)
+    - [Copy New Certificate and Merge with Private Key](#copy-new-certificate-and-merge-with-private-key)
   - [Configure Container Runtime Environment](#configure-container-runtime-environment)
     - [Install Containerd](#install-containerd)
       - [Configure cgroup drivers](#configure-cgroup-drivers)
@@ -58,6 +61,9 @@ COCloud K8s Development Cluster Oogie
       - [Install Calico network overlay](#install-calico-network-overlay)
     - [Verify Cluster Status](#verify-cluster-status)
     - [Add additional nodes to cluster and labels, taints, and tolerances](#add-additional-nodes-to-cluster-and-labels-taints-and-tolerances)
+    - [Projects](#projects)
+      - [eaa791org-dev](#eaa791org-dev)
+      - [eaa791org-prod](#eaa791org-prod)
 
 ## Introduction
 
@@ -314,184 +320,241 @@ vi /etc/hosts
 
 This deployment uses a custom PKI configuration that will generate a Certificate Signing Request (CSR) to be signed by an external Root Certificate Authority. The certificate authority created by this deployment will be a Subordinate CA used for signing all certificates requested and signed for use solely by the deployed Kubernetes cluster.
 
-#### Kubernetes Cluster Issuing Certificate Authority
+#### COCloud Kubernetes Cluster Issuing Certificate Authority
 
 - The Certificate Authority should be installed on a PRIV access Ubuntu management workstation
 - Create Openssl configuration file to create subordinate CA certificate request
-  - Generating a Certificate Signing Request (CSR) for a Subject Alternative Name (SAN) certificate using OpenSSL with a configuration file involves a few steps. Here's a guide to help you through the process:
+  - Generating a Certificate Signing Request (CSR) for a Subject Alternative Name (SAN) certificate using OpenSSL with a configuration file involves following through with this process.
 
 - Create the CA Request on Ubuntu
   - Configure Your CA: Update your OpenSSL configuration to use the new CA certificate and key
 
 - Create the CA folder structure
 
-```bash
-mkdir /opt/ca
-mkdir /opt/ca/certs
-mkdir /opt/ca/crl
-mkdir /opt/ca/newcerts
-mkdir /opt/ca/private
-mkdir /opt/ca/requests
-touch /opt/ca/index.txt
-echo 1000 > /opt/ca/serial
-```
+### Create Kubernetes SubCA Initialization Script
 
-- Set strict permissions of the CA folder
+- Kubernetes Cluster Name: COPINE-KUBE
+- Kubernetes CA Name: COPINEKUBECA01
 
-```bash
-chmod 600 /opt/ca
-```
+- *init-copinekubeca01.sh file*
 
-- Create Openssl configuration file to create CA certificate request
-
-```bash
-tee /opt/ca/requests/cacert-openssl.cnf <<EOF
+```text
+#!/bin/bash
+clear
+echo BEGIN
+echo
+echo -------------------------------
+echo Removing exisiting subCA...
+rm -rf /opt/copinekubeca01/
+echo
+echo -------------------------------
+echo Setting variables...
+export CaName=copinekubeca01
+export CaCertName='COPINE Kubernetes Issuing Certificate Authority 01'
+export dir=/opt/$CaName
+export RootCaName=cocloud-subca03
+echo
+echo -------------------------------
+echo Making directory and file structure...
+mkdir -p $dir/{certs,crl,newcerts,private,requests}
+touch $dir/index.txt
+echo 1000 > $dir/serial
+echo -------------------------------
+echo Setting permissions...
+chmod 600 $dir
+echo
+echo -------------------------------
+echo Create Openssl configuration file...
+tee $dir/$CaName.cnf <<EOF
 [ ca ]
 default_ca = CA_default
 
 [ CA_default ]
-dir = /opt/ca
-certs = $dir/certs
-crl_dir = $dir/crl
-database = $dir/index.txt
-new_certs_dir = $dir/newcerts
-certificate = $dir/cacert.pem
-serial = $dir/serial
-crlnumber = $dir/crlnumber
-crl = $dir/crl.pem
-private_key = $dir/private/cakey.pem
-RANDFILE = $dir/private/.rand
-default_days = 3650
+# Directory and file locations.
+CaName            = $CaName
+CertificateName   = $CaCertName
+dir               = /$dir/$CaName
+certs             = $dir/certs
+crl_dir           = $dir/crl
+new_certs_dir     = $dir/newcerts
+database          = $dir/index.txt
+serial            = $dir/serial
+RANDFILE          = $dir/private/.rand
+
+# The root key and root certificate.
+private_key       = $dir/private/$RootCaName-key.pem
+certificate       = $dir/certs/$RootCaName.pem
+
+# For certificate revocation lists.
+crlnumber         = $dir/crlnumber
+crl               = $dir/crl/subca.crl.pem
+crl_extensions    = crl_ext
+default_crl_days  = 30
+
+# SHA-1 is deprecated, so use SHA-2 instead.
+default_md        = sha256
+
+name_opt          = ca_default
+cert_opt          = ca_default
+default_days      = 3650
+preserve          = no
+policy            = policy_strict
+
+copy_extensions   = copy
+
+[ policy_strict ]
+# The root CA should only sign subca certificates that match.
+countryName             = match
+stateOrProvinceName     = match
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ policy_loose ]
+# Allow the subca CA to sign a more diverse range of certificates.
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
 
 [ req ]
-default_bits = 4096
-default_md = sha256
-distinguished_name = req_distinguished_name
-x509_extensions = v3_ca
-string_mask = utf8only
+default_bits        = 2048
+distinguished_name  = req_distinguished_name
+string_mask         = utf8only
+
+# SHA-1 is deprecated, so use SHA-2 instead.
+default_md          = sha256
+
+# Extension to add when the -x509 option is used.
+x509_extensions     = v3_subca_ca
 
 [ req_distinguished_name ]
-countryName = Country Name (2 letter code)
-countryName_default = US
-stateOrProvinceName = State or Province Name (full name)
-stateOrProvinceName_default = Florida
-localityName = Locality Name (eg, city)
-localityName_default = New Port Richey
-organizationName = Organization Name (eg, company)
-organizationName_default = Cantrell Cloud ES
-commonName = Common Name (eg, YOUR name)
-commonName_default = Cantrell Cloud Kubernetes Certificate Authority 01
+commonName                      = Common Name
+countryName                     = Country Name (2 letter code)
+stateOrProvinceName             = State or Province Name
+localityName                    = Locality Name
+0.organizationName              = Organization Name
+organizationalUnitName          = Organizational Unit Name
+emailAddress                    = Email Address
+
+# Optionally, specify some defaults.
+commonName_default              = $CaCertName
+countryName_default             = US
+stateOrProvinceName_default     = Florida
+localityName_default            = New Port Richey
+0.organizationName_default      = Cantrell Cloud ES
+organizationalUnitName_default  = InfoSys
+emailAddress_default            =
 
 [ v3_ca ]
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid:always,issuer
-basicConstraints = critical,CA:true
+basicConstraints = critical, CA:true
 keyUsage = critical, digitalSignature, cRLSign, keyCertSign
-EOF
-```
 
-```bash
-tee /opt/ca/requests/subca-cacert-openssl.cnf <<EOF
-[ ca ]
-default_ca = CA_default
-
-[ CA_default ]
-dir = /opt/ca
-certs = $dir/certs
-crl_dir = $dir/crl
-database = $dir/index.txt
-new_certs_dir = $dir/newcerts
-certificate = $dir/cacert.pem
-serial = $dir/serial
-crlnumber = $dir/crlnumber
-crl = $dir/crl.pem
-private_key = $dir/private/cakey.pem
-RANDFILE = $dir/private/.rand
-default_days = 3650
-
-[ req ]
-default_bits = 4096
-default_md = sha256
-distinguished_name = req_distinguished_name
-x509_extensions = v3_ca
-string_mask = utf8only
-
-[ req_distinguished_name ]
-countryName = Country Name (2 letter code)
-countryName_default = US
-stateOrProvinceName = State or Province Name (full name)
-stateOrProvinceName_default = Florida
-localityName = Locality Name (eg, city)
-localityName_default = New Port Richey
-organizationName = Organization Name (eg, company)
-organizationName_default = Cantrell Cloud ES
-commonName = Common Name (eg, YOUR name)
-commonName_default = Cantrell Cloud Kubernetes Issuing Certificate Authority 01
-
-[ v3_ca ]
+[ v3_subca_ca ]
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid:always,issuer
-basicConstraints = critical,CA:true
+# Setting pathlen to 1 so that this SubCA can sign CA requests for Kubernetes clusters
+basicConstraints = critical, CA:true, pathlen:1
 keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+
+[ usr_cert ]
+basicConstraints = CA:FALSE
+nsCertType = client, email
+nsComment = "COCloud OpenSSL Generated Client Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth, emailProtection
+authorityInfoAccess = URI:http://pki.cantrell.cloud/pki/$CaName$CaCertName.crt
+crlDistributionPoints = URI:http://pki.cantrell.cloud/pki/$CaName.crl
+
+[ server_cert ]
+basicConstraints = CA:FALSE
+nsCertType = server
+nsComment = "COCloud OpenSSL Generated Server Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+authorityInfoAccess = URI:http://pki.cantrell.cloud/pki/$CaName$CaCertName.crt
+crlDistributionPoints = URI:http://pki.cantrell.cloud/pki/$CaName.crl
+#subjectAltName = @alt_names
+
+#[ alt_names ]
+#DNS.1 = example.com
+#DNS.2 = www.example.com
+#DNS.3 = m.example.com
+
+[ crl_ext ]
+authorityKeyIdentifier=keyid:always
 EOF
-```
-
-- Generate CA/Root Certificate Request
-
-- Generate CA Private Key:
-
-```bash
+echo
+echo -------------------------------
+echo
+echo Generate Certificate Request...
+echo -------------------------------
+echo Creating Private Key...
 openssl genrsa \
   -aes256 \
-  -out /opt/ca/private/cakey.pem \
+  -out $dir/private/$CaName-key.pem \
   4096
-```
-
-```bash
-# subj Cantrell Cloud Kubernetes Certificate Authority 01
-openssl req -new -x509 \
-  -days 3650 \
-  -extensions v3_ca \
-  -out /opt/ca/cacert.pem \
-  -key /opt/ca/private/cakey.pem \
-  -config /opt/ca/requests/cacert-openssl.cnf
-```
-
-- Generate SubCA/Root Certificate Request
-  - To be installed on kubeadmin.k8.cantrellcloud.net
-
-- Generate subCA Private Key:
-
-```bash
-openssl genrsa \
-  -aes256 \
-  -out /opt/ca/private/subca-cakey.pem \
-  4096
-```
-
-```bash
-# subj Cantrell Cloud Kubernetes Issuing Certificate Authority 01
-
-
-
-
-
+echo
+echo -------------------------------
+echo Creating certificate request...
 openssl req -new \
-  -extensions v3_ca \
-  -out /opt/ca/requests/subca-cacert.csr \
-  -key /opt/ca/private/subca-cakey.pem \
-  -config /opt/ca/requests/subca-cacert-openssl.cnf
+  -extensions v3_subca_ca \
+  -out $dir/requests/$CaName.csr \
+  -key $dir/private/$CaName-key.pem \
+  -config $dir/$CaName.cnf
+echo
+echo -------------------------------
+echo If using Windows or other external Certificate Authority to sign the request
+echo Use the .req request file to generate the signed certificate from the external CA
+echo
+echo -------------------------------
+echo Copy request file to caadmin home
+cp $dir/requests/$CaName.csr /home/kadmin/kubeconf/build/$CaName.req
+echo
+echo -------------------------------
+echo Change permissions to kadmin
+chown kadmin:kadmin /home/kadmin/kubeconf/build/$CaName.req
+echo END
+echo
+```
 
+### On the issuing CA server
+
+```bash
 openssl x509 -req \
-  -in /opt/ca/requests/subca-cacert.csr \
-  -CA /opt/ca/cacert.pem \
-  -CAkey /opt/ca/private/cakey.pem \
-  -out /opt/ca/certs/subca-cacert.crt \
-  -extensions v3_ca \
-  -extfile /opt/ca/requests/cacert-openssl.cnf
+ -in $dir/requests/$CaName.csr \
+ -CA $dir/cacert.pem \
+ -CAkey $dir/private/cakey.pem \
+ -out $dir/certs/$CaName.crt \
+ -extensions v3_ca \
+ -extfile $dir/$CaName.cnf
 
-cat /opt/ca/certs/subca-cacert.crt /opt/ca/private/subca-cakey.pem > /opt/ca/certs/subca-cacert.pem
+openssl ca \
+  -in /home/caadmin/copinekubeca01.req \
+  -CA /opt/subca03/cocloud-subca03.pem \
+  -CAkey /opt/subca03/private/cocloud-subca03-key.pem \
+  -out /opt/ca/certs/copinekubeca01.crt \
+  -extensions v3_subca_ca \
+  -extfile /home/caadmin/copinekubeca01.cnf
+```
 
+### Copy New Certificate and Merge with Private Key
+
+```bash
+# Copy the new certificate file to $dir/certs
+# The new certificate-key file should already be in $dir/private
+# Merge the new certificate with it's private key
+cat $dir/certs/$CaName.crt $dir/private/$CaName-key.pem > $dir/certs/$CaName.pem
 ```
 
 -------------------------------------------------------------------------------
@@ -513,6 +576,166 @@ scp /usr/local/share/ca-certificates/Cantrell-Cloud-Kubernetes-Certificate-Autho
   kadmin@kubeimage.k8.cantrellcloud.net:/home/kadmin/kubeconf/certs/Cantrell-Cloud-Kubernetes-Certificate-Authority-01.crt
 scp /usr/local/share/ca-certificates/Cantrell-Cloud-Kubernetes-Issuing-Certificate-Authority-01.crt \
   kadmin@kubeimage.k8.cantrellcloud.net:/home/kadmin/kubeconf/certs/Cantrell-Cloud-Kubernetes-Issuing-Certificate-Authority-01.crt
+```
+
+- Create copine-kube CA Certificate
+
+```bash
+# Export Variables
+export CERT_CA_NAME=copinesubca01
+export CERT_CA_HOME=/opt/copinesubca01
+export CERT_NAME=copine-kube
+export CERT_DISPLAY_NAME='Kubernetes Cluster copine-kube CA'
+export CERT_EXT=v3_subca_ca
+export CERT_DAYS=3560
+export CERT_BITS=2048
+tee /opt/${CERT_CA_NAME}/requests/${CERT_NAME}.cnf <<EOF
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+# Directory and file locations.
+dir               = /opt/${CERT_CA_NAME}/cocloud-subca03
+certs             = /opt/${CERT_CA_NAME}/certs
+crl_dir           = /opt/${CERT_CA_NAME}/crl
+new_certs_dir     = /opt/${CERT_CA_NAME}/newcerts
+database          = /opt/${CERT_CA_NAME}/index.txt
+serial            = /opt/${CERT_CA_NAME}/serial
+RANDFILE          = /opt/${CERT_CA_NAME}/private/.rand
+
+# The root key and root certificate.
+private_key       = /opt/${CERT_CA_NAME}/private/
+certificate       = /opt/${CERT_CA_NAME}/
+
+# For certificate revocation lists.
+crlnumber         = /opt/${CERT_CA_NAME}/crlnumber
+crl               = /opt/${CERT_CA_NAME}/crl/subca.crl.pem
+crl_extensions    = crl_ext
+default_crl_days  = 30
+
+# SHA-1 is deprecated, so use SHA-2 instead.
+default_md        = sha256
+
+name_opt          = ca_default
+cert_opt          = ca_default
+default_days      = ${CERT_DAYS}
+preserve          = no
+policy            = policy_strict
+
+copy_extensions   = copy
+
+[ policy_strict ]
+# The root CA should only sign subca certificates that match.
+countryName             = match
+stateOrProvinceName     = match
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ policy_loose ]
+# Allow the subca CA to sign a more diverse range of certificates.
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ req ]
+default_bits        = ${CERT_BITS}
+distinguished_name  = req_distinguished_name
+string_mask         = utf8only
+
+# SHA-1 is deprecated, so use SHA-2 instead.
+default_md          = sha256
+
+# Extension to add when the -x509 option is used.
+x509_extensions     = server_cert
+
+[ req_distinguished_name ]
+commonName                      = Common Name
+countryName                     = Country Name (2 letter code)
+stateOrProvinceName             = State or Province Name
+localityName                    = Locality Name
+0.organizationName              = Organization Name
+organizationalUnitName          = Organizational Unit Name
+emailAddress                    = Email Address
+
+# Optionally, specify some defaults.
+commonName_default              = ${CERT_DISPLAY_NAME}
+countryName_default             = US
+stateOrProvinceName_default     = Florida
+localityName_default            = New Port Richey
+0.organizationName_default      = Cantrell Cloud ES
+organizationalUnitName_default  = InfoSys
+emailAddress_default            =
+
+[ v3_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+
+[ v3_subca_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+# Setting pathlen to 1 so that this SubCA can sign CA requests for Kubernetes clusters
+basicConstraints = critical, CA:true, pathlen:1
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+
+[ usr_cert ]
+basicConstraints = CA:FALSE
+nsCertType = client, email
+nsComment = "COCloud OpenSSL Generated Client Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth, emailProtection
+authorityInfoAccess = URI:http://pki.cantrell.cloud/pki/cocloud-subca03Cantrell Cloud Issuing Certificate Authority 03.crt
+crlDistributionPoints = URI:http://pki.cantrell.cloud/pki/cocloud-subca03.crl
+
+[ server_cert ]
+basicConstraints = CA:FALSE
+nsCertType = server
+nsComment = "COCloud OpenSSL Generated Server Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+authorityInfoAccess = URI:http://pki.cantrell.cloud/pki/cocloud-subca03Cantrell Cloud Issuing Certificate Authority 03.crt
+crlDistributionPoints = URI:http://pki.cantrell.cloud/pki/cocloud-subca03.crl
+#subjectAltName = @alt_names
+
+#[ alt_names ]
+#DNS.1 = example.com
+#DNS.2 = www.example.com
+#DNS.3 = m.example.com
+
+[ crl_ext ]
+authorityKeyIdentifier=keyid:always
+EOF
+```
+
+- Generate Certificate Request
+
+```bash
+# Create Certificate Request
+openssl req \
+  -out ${CERT_CA_HOME}/requests/${CERT_NAME}.csr \
+  -newkey rsa:2048 \
+  -nodes \
+  -keyout ${CERT_CA_HOME}/private/${CERT_NAME}-key.pem \
+  -extensions ${CERT_EXT} \
+  -config ${CERT_CA_HOME}/requests/${CERT_NAME}.cnf
+
+# Sign Certificate Request
+openssl ca \
+  -extensions ${CERT_EXT} \
+  -in ${CERT_CA_HOME}/requests/${CERT_NAME}.csr \
+  -out ${CERT_CA_HOME}/certs/${CERT_NAME}.crt \
+  -extfile ${CERT_CA_HOME}/requests/${CERT_NAME}.cnf
 ```
 
 - Create KubeRegistry SAN Configuration File
@@ -577,10 +800,6 @@ DNS.2                  = kubeadmin.cantrellcloud.net
 IP.1                   = 10.0.69.62
 EOF
 ```
-
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
 
 - Server/Client Certificates
   - Create certificate request
@@ -705,7 +924,7 @@ Note: I did not configure the following
 
 ```bash
 mkdir -p /etc/containerd
-containerd config default | tee /etc/containerd/config.toml >/dev/null 2>&1
+
 ```
 
 - verify containerd config file - still need to work on this
@@ -1137,4 +1356,110 @@ kubectl label node nodename key=value
 
 ```bash
 k exec --stdin --tty dev-intdmz-linux-test-65bf85b85d-lnnhw --namespace=dev-external -- /bin/bash
+```
+
+### Projects
+
+#### eaa791org-dev
+
+Currently hosted on cotpa-nas01.cantrellcloud.net:container_manager
+
+```yaml
+version: "'2'"
+services:
+  wordpress:
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: grep -hv 'local_address' /proc/net/tcp6 /proc/net/tcp | awk 'function hextodec(str,ret,n,i,k,c){ret = 0;n = length(str);for (i = 1; i <= n; i++) {c = tolower(substr(str, i, 1));k = index("123456789abcdef", c);ret = ret * 16 + k}return ret} {print hextodec(substr($$2,index($$2,":")+1,4))}' | grep 9000 || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 30
+      start_period: 40s
+    image: wordpress:6.5-fpm@sha256:54072b0acb9a1e33acb5363fede77f50402be114be1d012315095818a020ff3e
+    labels:
+      com.webstation.type: thirdparty
+    sysctls:
+      net.core.somaxconn: 65535
+    volumes:
+      - /volume3/web/eaa791org-dev:/var/www/syno
+    environment:
+      WORDPRESS_DB_HOST: database
+      WORDPRESS_DB_NAME: eaa791orgdb
+      WORDPRESS_DB_PASSWORD: aUR@MesUyWKB!2^BVc
+      WORDPRESS_DB_USER: eaa791dbadmin
+  system:
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    image: busybox
+    tty: true
+  database:
+    image: mariadb:11.4@sha256:e59ba8783bf7bc02a4779f103bb0d8751ac0e10f9471089709608377eded7aa8
+    volumes:
+      - /var/services/web_packages/docker/mariadb/eaa791org-dev:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: eaa791orgdb
+      MYSQL_USER: eaa791dbadmin
+      MYSQL_PASSWORD: aUR@MesUyWKB!2^BVc
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    healthcheck:
+      test: mariadb -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e'quit' || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 60
+      start_period: 40s
+```
+
+#### eaa791org-prod
+
+Currently hosted on cotpa-nas01.cantrellcloud.net:container_manager
+
+```yaml
+version: "'2'"
+services:
+  wordpress:
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: grep -hv 'local_address' /proc/net/tcp6 /proc/net/tcp | awk 'function hextodec(str,ret,n,i,k,c){ret = 0;n = length(str);for (i = 1; i <= n; i++) {c = tolower(substr(str, i, 1));k = index("123456789abcdef", c);ret = ret * 16 + k}return ret} {print hextodec(substr($$2,index($$2,":")+1,4))}' | grep 9000 || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 30
+      start_period: 40s
+    image: wordpress:6.5-fpm@sha256:54072b0acb9a1e33acb5363fede77f50402be114be1d012315095818a020ff3e
+    labels:
+      com.webstation.type: thirdparty
+    sysctls:
+      net.core.somaxconn: 65535
+    volumes:
+      - /volume3/web/eaa791org-prod:/var/www/syno
+    environment:
+      WORDPRESS_DB_HOST: database
+      WORDPRESS_DB_NAME: eaa791orgdb
+      WORDPRESS_DB_PASSWORD: aUR@MesUyWKB!2^BVc
+      WORDPRESS_DB_USER: eaa791dbadmin
+  system:
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    image: busybox
+    tty: true
+  database:
+    image: mariadb:11.4@sha256:e59ba8783bf7bc02a4779f103bb0d8751ac0e10f9471089709608377eded7aa8
+    volumes:
+      - /var/services/web_packages/docker/mariadb/eaa791org-prod:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: eaa791orgdb
+      MYSQL_USER: eaa791dbadmin
+      MYSQL_PASSWORD: aUR@MesUyWKB!2^BVc
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    healthcheck:
+      test: mariadb -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e'quit' || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 60
+      start_period: 40s
 ```
