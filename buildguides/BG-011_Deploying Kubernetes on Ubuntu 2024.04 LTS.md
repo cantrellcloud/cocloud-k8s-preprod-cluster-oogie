@@ -27,6 +27,7 @@ COCloud K8s Development Cluster Oogie
         - [URLs](#urls)
       - [Tools](#tools)
         - [Install Linux Integration Services (Hyper-V Tools)](#install-linux-integration-services-hyper-v-tools)
+        - [Install verify-cert Bash Script](#install-verify-cert-bash-script)
         - [Add Command Line Aliases](#add-command-line-aliases)
         - [Set NTP Client](#set-ntp-client)
         - [Update OS and Install Tools](#update-os-and-install-tools)
@@ -203,6 +204,25 @@ update-initramfs -u
 reboot
 ```
 
+##### Install verify-cert Bash Script
+
+```bash
+sudo tee /usr/local/bin/verify-cert <<EOF
+#! /bin/bash
+# Argument validation check
+if [ "$#" -ne 2 ]; then
+        echo "Usage: $0 <certificate> <certificate-key>"
+        exit 1
+fi
+
+openssl rsa -noout -modulus -in ${2} | openssl md5
+openssl x509 -noout -modulus -in ${1} | openssl md5
+echo Do the above hashes match?
+echo
+EOF
+sudo chmod a+x /usr/local/bin/verify-cert
+```
+
 ##### Add Command Line Aliases
 
 - For frequently used commands
@@ -226,6 +246,7 @@ alias nirm='nerdctl image rm'
 alias ncrm='nerdctl container rm'
 alias ncstart='nerdctl container start'
 alias ncstop='nerdctl container stop'
+alias vc=verify-cert
 EOF
 
 source ~/.bash_aliases
@@ -531,21 +552,14 @@ echo
 ### On the issuing CA server
 
 ```bash
-openssl x509 -req \
- -in $dir/requests/$CaName.csr \
- -CA $dir/cacert.pem \
- -CAkey $dir/private/cakey.pem \
- -out $dir/certs/$CaName.crt \
- -extensions v3_ca \
- -extfile $dir/$CaName.cnf
-
 openssl ca \
-  -in /home/caadmin/copinekubeca01.req \
-  -CA /opt/subca03/cocloud-subca03.pem \
-  -CAkey /opt/subca03/private/cocloud-subca03-key.pem \
-  -out /opt/ca/certs/copinekubeca01.crt \
-  -extensions v3_subca_ca \
-  -extfile /home/caadmin/copinekubeca01.cnf
+  -in /opt/copinekubeca01/requests/copinekubeca01.csr \
+  -cert /opt/cocloud-subca03/cocloud-subca03.crt \
+  -keyfile /opt/cocloud-subca03/private/cocloud-subca03-key.pem \
+  -out /opt/copinekubeca01/certs/copinekubeca01.crt \
+  -extensions v3_subca_ca
+ #No EXTFILE needed if using local machine's /etc/ssl/openssl.cnf config file.
+ #-extfile /opt/copinekubeca01/requests/copinekubeca01.cnf
 ```
 
 ### Copy New Certificate and Merge with Private Key

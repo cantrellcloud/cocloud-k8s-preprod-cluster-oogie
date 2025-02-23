@@ -51,7 +51,7 @@ echo BEGIN
 echo
 echo -------------------------------
 echo Removing exisiting subCA...
-rm -rf /opt/subca03/
+rm -rf /opt/cocloud-subca03/
 echo
 echo -------------------------------
 echo Setting variables...
