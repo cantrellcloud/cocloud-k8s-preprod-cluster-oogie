@@ -5,7 +5,8 @@
     - [Verify a Certificate and Key](#verify-a-certificate-and-key)
   - [COCloud Issuing Certificate Authority 03](#cocloud-issuing-certificate-authority-03)
     - [Create SubCA Initialization Script](#create-subca-initialization-script)
-    - [Copy New Certificate and Merge with Private Key](#copy-new-certificate-and-merge-with-private-key)
+    - [Submit Request to Cantrell Cloud Certificate Authority](#submit-request-to-cantrell-cloud-certificate-authority)
+    - [Other Information](#other-information)
     - [Next Steps](#next-steps)
 
 ---
@@ -14,16 +15,18 @@
 
 ### Verify a Certificate and Key
 
-To check the modulus of your SSL certificate, run:
-
 ```bash
-openssl x509 -noout -modulus -in your_certificate.crt | openssl md5
-```
+#! /bin/bash
+# Argument validation check
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <certificate> <certificate-key>"
+  exit 1
+fi
 
-To check the modulus of your private key, run:
-
-```bash
-openssl rsa -noout -modulus -in your_private_key.key | openssl md5
+openssl rsa  -noout -modulus -in ${2} | openssl md5
+openssl x509 -noout -modulus -in ${1} | openssl md5
+echo Do the above hashes match?
+echo
 ```
 
 ## COCloud Issuing Certificate Authority 03
@@ -67,7 +70,7 @@ chmod 600 $dir
 echo
 echo -------------------------------
 echo Create Openssl configuration file...
-tee $dir/$CaName.cnf <<EOF
+tee $dir/requests/$CaName.cnf <<EOF
 [ ca ]
 default_ca = CA_default
 
@@ -230,13 +233,11 @@ echo END
 echo
 ```
 
-### Copy New Certificate and Merge with Private Key
+### Submit Request to Cantrell Cloud Certificate Authority
 
-```bash
-# Copy the new certificate to $dir/certs
-# Merge the new certificate with it's private key
-cat $dir/certs/$CaName.crt $dir/private/$CaName-key.pem > $dir/certs/$CaName.pem
-```
+
+
+### Other Information
 
 ```bash
 # If using Ubuntu/Linux Certificate Authority to sign the request
@@ -255,5 +256,6 @@ cat $dir/certs/$CaName.crt $dir/private/$CaName-key.pem > $dir/certs/$CaName.pem
 Submit additional intermediate subordinate certificate authorities requests to this SubCA
 for use with COCloud Kerbernetes Clusters to allow intra-cluster auto generation of certificates.
 
-A request should be submitted for each cluster being deployed. See build guide *BG-011 Deploying a*
-*Kubernetes on Ubuntu 2024.04 LTS.md*
+A request should be submitted for each cluster being deployed. The ca.key file should not have
+a password set. See build guide *BG-011 Deploying Kubernetes on Ubuntu 2024.04 LTS.md* for more
+information.

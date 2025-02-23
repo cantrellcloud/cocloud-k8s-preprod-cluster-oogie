@@ -4,13 +4,13 @@ echo BEGIN
 echo
 echo -------------------------------
 echo Removing exisiting subCA...
-rm -rf /opt/copinekubeca01/
+rm -rf /opt/cocloud-subca03/
 echo
 echo -------------------------------
 echo Setting variables...
-export CaName=copinekubeca01
-export CaCertName='COPINE Kubernetes Issuing Certificate Authority 01'
-export dir=/opt/$CaName
+export CaName=cocloud-subca03
+export CaCertName='Cantrell Cloud Issuing Certificate Authority 03'
+export dir=/opt/cocloud-subca03
 export RootCaName=cocloud-subca03
 echo
 echo -------------------------------
@@ -24,7 +24,7 @@ chmod 600 $dir
 echo
 echo -------------------------------
 echo Create Openssl configuration file...
-tee $dir/$CaName.cnf <<EOF
+tee $dir/requests/$CaName.cnf <<EOF
 [ ca ]
 default_ca = CA_default
 
@@ -57,7 +57,7 @@ name_opt          = ca_default
 cert_opt          = ca_default
 default_days      = 3650
 preserve          = no
-policy            = policy_strict
+policy            = policy_loose
 
 copy_extensions   = copy
 
@@ -178,10 +178,9 @@ echo Use the .req request file to generate the signed certificate from the exter
 echo
 echo -------------------------------
 echo Copy request file to caadmin home
-echo #cp $dir/requests/$CaName.csr /home/kadmin/kubeconf/build/$CaName.req
+cp $dir/requests/$CaName.csr /home/caadmin/$CaName.req
 echo
 echo -------------------------------
-echo Change permissions to kadmin
-echo #chown kadmin:kadmin /home/kadmin/kubeconf/build/$CaName.req
+echo Change permissions to caadmin
+chown caadmin:caadmin /home/caadmin/$CaName.req
 echo END
-echo

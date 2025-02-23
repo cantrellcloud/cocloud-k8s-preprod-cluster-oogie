@@ -1,0 +1,11 @@
+#! /bin/bash
+# Argument validation check
+if [ "$#" -ne 2 ]; then
+	echo "Usage: $0 <certificate> <certificate-key>"
+	exit 1
+fi
+
+openssl rsa -noout -modulus -in ${2} | openssl md5
+openssl x509 -noout -modulus -in ${1} | openssl md5
+echo Do the above hashes match?
+echo

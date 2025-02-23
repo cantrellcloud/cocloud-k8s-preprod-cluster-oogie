@@ -582,10 +582,10 @@ scp /usr/local/share/ca-certificates/Cantrell-Cloud-Kubernetes-Issuing-Certifica
 
 ```bash
 # Export Variables
-export CERT_CA_NAME=copinesubca01
-export CERT_CA_HOME=/opt/copinesubca01
-export CERT_NAME=copine-kube
 export CERT_DISPLAY_NAME='Kubernetes Cluster copine-kube CA'
+export CERT_NAME=copine-kube
+export CERT_CA_NAME=copinekubeca01
+export CERT_CA_HOME=/opt/copinekubeca01
 export CERT_EXT=v3_subca_ca
 export CERT_DAYS=3560
 export CERT_BITS=2048
@@ -735,7 +735,10 @@ openssl ca \
   -extensions ${CERT_EXT} \
   -in ${CERT_CA_HOME}/requests/${CERT_NAME}.csr \
   -out ${CERT_CA_HOME}/certs/${CERT_NAME}.crt \
-  -extfile ${CERT_CA_HOME}/requests/${CERT_NAME}.cnf
+  -extfile ${CERT_CA_HOME}/requests/${CERT_NAME}.cnf \
+  -cert ${CERT_CA_HOME}/${CERT_CA_NAME}.pem \
+  -keyfile ${CERT_CA_HOME}/private/${CERT_CA_NAME}-key.pem \
+  -config ${CERT_CA_HOME}/requests/${CERT_CA_NAME}.cnf
 ```
 
 - Create KubeRegistry SAN Configuration File

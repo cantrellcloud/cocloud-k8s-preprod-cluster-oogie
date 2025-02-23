@@ -2,32 +2,32 @@ apiVersion: kubeadm.k8s.io/v1beta4
 bootstrapTokens:
 - groups:
   - system:bootstrappers:kubeadm:default-node-token
-  token: "${KUBEADM_TOKEN}"
+  token: "${KUBECONF_TOKEN}"
   ttl: 24h0m0s
   usages:
   - signing
   - authentication
 kind: InitConfiguration
 localAPIEndpoint:
-  advertiseAddress: ${KUBEADM_API_ADVERTISE_IP_1}
+  advertiseAddress: ${KUBECONF_API_ADVERTISE_IP_1}
   bindPort: 6443
 ---
 apiServer:
   certSANs:
-    - ${KUBEADM_API_ENDPOINT_INTERNAL}
-    - ${KUBEADM_API_ENDPOINT_EXTERNAL}
+    - ${KUBECONF_API_ENDPOINT_INTERNAL}
+    - ${KUBECONF_API_ENDPOINT_EXTERNAL}
 apiVersion: kubeadm.k8s.io/v1beta4
-certificatesDir: ${KUBEADM_PKI_HOMEDIR}
-clusterName: ${KUBEADM_CLUSTER_NAME}
-controlPlaneEndpoint: ${KUBEADM_API_ENDPOINT_EXTERNAL}:6443
-encryptionAlgorithm: RSA-2048
+certificatesDir: ${KUBECONF_PKI_HOMEDIR}
+clusterName: ${KUBECONF_CLUSTER_NAME}
+controlPlaneEndpoint: ${KUBECONF_API_ENDPOINT_EXTERNAL}:6443
+encryptionAlgorithm: RSA-4096
 etcd:
   local:
     dataDir: /var/lib/etcd
-imageRepository: offline-registry.dev.local
+imageRepository: kuberegistry.k8.cantrellcloud.net
 kind: ClusterConfiguration
-kubernetesVersion: ${KUBEADM_K8S_VERSION}
+kubernetesVersion: ${KUBECONF_K8S_VERSION}
 networking:
-  dnsDomain: ${KUBEADM_DNS_DOMAIN}
-  serviceSubnet: ${KUBEADM_SERVICE_SUBNET}
-  podSubnet: ${KUBEADM_POD_SUBNET}
+  dnsDomain: ${KUBECONF_DNS_DOMAIN}
+  serviceSubnet: ${KUBECONF_SERVICE_SUBNET}
+  podSubnet: ${KUBECONF_POD_SUBNET}

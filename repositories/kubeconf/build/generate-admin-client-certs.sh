@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-CERTS_DIR=${1:-$KUBEADM_PKI_HOMEDIR}
+CERTS_DIR=${1:-$KUBECONF_PKI_HOMEDIR}
 CA="${CERTS_DIR}"/ca.crt
 CA_KEY="${CERTS_DIR}"/ca.key
 

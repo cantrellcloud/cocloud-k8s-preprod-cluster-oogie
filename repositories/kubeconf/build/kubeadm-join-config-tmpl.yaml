@@ -6,7 +6,7 @@ enable-controller-attach-detach: "false"
 node-labels: "node-type=rook"
 discovery:
 bootstrapToken:
-apiServerEndpoint: ${KUBEADM_API_ENDPOINT_INTERNAL}
- token: ${KUBEADM_TOKEN}
+apiServerEndpoint: ${KUBECONF_API_ENDPOINT_INTERNAL}
+ token: ${KUBECONF_TOKEN}
  caCertHashes:
  - ${CA_CERT_HASH}
