@@ -41,7 +41,7 @@ COCloud K8s Development Cluster Oogie
     - [Install Containerd](#install-containerd)
       - [Configure cgroup drivers](#configure-cgroup-drivers)
   - [Configure Cloned Machine](#configure-cloned-machine)
-  - [Create and Configure Offline Registry](#create-and-configure-offline-registry)
+  - [Create and Configure KubeRegistry](#create-and-configure-kuberegistry)
     - [Install Helm](#install-helm)
       - [Install Helm Charts](#install-helm-charts)
     - [Install NFS Shares](#install-nfs-shares)
@@ -283,7 +283,7 @@ apt install -y kubelet kubeadm kubectl openssl ufw vim apt-transport-https ca-ce
 apt-mark hold kubelet kubeadm kubectl
 apt update && apt upgrade -y
 
-### enable kubelet service
+### enable kubelet service - add this to cluster initialization scripts
 # the kubelet will restart every few seconds, as it waits in a crashloop for kubeadm to tell it what to do.
 
 # hostname: kubeimage
@@ -311,6 +311,18 @@ vi /etc/hosts
 ```
 
 ```bash
+10.0.69.51 kubectrl01
+10.0.69.52 kubectrl02
+10.0.69.53 kubectrl03
+10.0.69.54 kubework01
+10.0.69.55 kubework02
+10.0.69.56 kubework03
+10.0.69.57 kubework04
+10.0.69.58 kubework05
+10.0.69.59 kubework06
+10.0.69.60 kubeimage
+10.0.69.61 kuberegistry
+10.0.69.62 kubeadmin
 10.0.69.51 kubectrl01.k8.cantrellcloud.net
 10.0.69.52 kubectrl02.k8.cantrellcloud.net
 10.0.69.53 kubectrl03.k8.cantrellcloud.net
@@ -576,9 +588,9 @@ cat $dir/certs/$CaName.crt $dir/private/$CaName-key.pem > $dir/certs/$CaName.pem
 - Copy new certificate to ca-certificates and update ca-certificates
 
 ```bash
-cp /opt/ca/certs/subca-cacert.pem \
+cp /opt/copinekubeca01/certs/subca-cacert.pem \
   /usr/local/share/ca-certificates/Cantrell-Cloud-Kubernetes-Certificate-Authority-01.crt
-cp /opt/ca/cacert.pem \
+cp /opt/copinekubeca01/cacert.pem \
   /usr/local/share/ca-certificates/Cantrell-Cloud-Kubernetes-Issuing-Certificate-Authority-01.crt
 update-ca-certificates --verbose
 ```
@@ -760,7 +772,7 @@ openssl ca \
 
 ```bash
 # kuberegistry certificate configuration
-tee /opt/ca/requests/kuberegistry-san.cnf <<EOF
+tee /opt/copinekubeca01/requests/kuberegistry.cnf <<EOF
 [req]
 default_bits           = 2048
 default_md             = sha256
@@ -785,11 +797,12 @@ subjectAltName         = @alt_names
 [alt_names]
 DNS.1                  = kuberegistry.k8.cantrellcloud.net
 DNS.2                  = kuberegistry.cantrellcloud.net
+DNS.3                  = kuberegistry
 IP.1                   = 10.0.69.61
 EOF
 
 # kubeadmin certificate configuration
-tee /opt/ca/requests/kubeadmin-san.cnf <<EOF
+tee /opt/copinekubeca01/requests/kubeadmin-san.cnf <<EOF
 [req]
 default_bits           = 2048
 default_md             = sha256
@@ -814,6 +827,7 @@ subjectAltName         = @alt_names
 [alt_names]
 DNS.1                  = kubeadmin.k8.cantrellcloud.net
 DNS.2                  = kubeadmin.cantrellcloud.net
+DNS.3                  = kubeadmin
 IP.1                   = 10.0.69.62
 EOF
 ```
@@ -824,42 +838,42 @@ EOF
 
 ```bash
 # kuberegistry certificate
-cd /opt/ca/requests
+cd /opt/copinekubeca01/requests
 openssl req \
-  -out kuberegistry.csr \
+  -extensions req_ext \
+  -out /opt/copinekubeca01/requests/kuberegistry.csr \
   -newkey rsa:2048 \
   -nodes \
-  -keyout /opt/ca/private/kuberegistry-key.pem \
-  -extensions req_ext \
-  -config kuberegistry-san.cnf
+  -keyout /opt/copinekubeca01/private/kuberegistry-key.pem \
+  -config /opt/copinekubeca01/requests/kuberegistry.cnf
 
 openssl ca \
-  -in kuberegistry.csr \
-  -out /opt/ca/certs/kuberegistry.crt \
   -extensions req_ext \
-  -extfile kuberegistry-san.cnf
-
-cat /opt/ca/certs/kuberegistry.crt /opt/ca/private/kuberegistry-key.pem > /opt/ca/certs/kuberegistry.pem
+  -in /opt/copinekubeca01/requests/kuberegistry.csr \
+  -out /opt/copinekubeca01/certs/kuberegistry.pem \
+  -extfile /opt/copinekubeca01/requests/kuberegistry.cnf \
+  -cert /opt/copinekubeca01/copinekubeca01.pem \
+  -keyfile /opt/copinekubeca01/private/copinekubeca01-key.pem
 ```
 
 ```bash
 # kubeadmin certificate
-cd /opt/ca/requests
+cd /opt/copinekubeca01/requests
 openssl req \
   -out kubeadmin.csr \
   -newkey rsa:2048 \
   -nodes \
-  -keyout /opt/ca/private/kubeadmin-key.pem \
+  -keyout /opt/copinekubeca01/private/kubeadmin-key.pem \
   -extensions req_ext \
   -config kubeadmin-san.cnf
 
 openssl ca \
   -in kubeadmin.csr \
-  -out /opt/ca/certs/kubeadmin.crt \
+  -out /opt/copinekubeca01/certs/kubeadmin.crt \
   -extensions req_ext \
   -extfile kubeadmin-san.cnf
 
-cat /opt/ca/certs/kubeadmin.crt /opt/ca/private/kubeadmin-key.pem > /opt/ca/certs/kubeadmin.pem
+cat /opt/copinekubeca01/certs/kubeadmin.crt /opt/copinekubeca01/private/kubeadmin-key.pem > /opt/copinekubeca01/certs/kubeadmin.pem
 ```
 
 -------------------------------------------------------------------------------
@@ -886,6 +900,9 @@ tee /etc/sysctl.d/kube.conf <<EOF
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
 EOF
 
 sysctl --system
@@ -950,9 +967,13 @@ mkdir -p /etc/containerd
 cat /etc/containerd/config.toml
 ```
 
-```text
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-SystemdCgroup = true
+To configure containerd to use the systemd driver, set the following option in /etc/containerd/config.toml:
+
+- In containerd 2.x
+
+```yaml
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc.options]
+  SystemdCgroup = true
 ```
 
 - Confirm cgroup v2
@@ -986,21 +1007,31 @@ rm /etc/machine-id
 systemd-machine-id-setup
 ```
 
+- Turn off swap
+
+```bash
+swapoff -a
+
+vi /etc/fstab
+```
+
 - Change IP Settings
 
 -------------------------------------------------------------------------------
 
-## Create and Configure Offline Registry
+## Create and Configure KubeRegistry
+
+- Must have valid server certificate and key file before running container
 
 ```bash
 # Start/Create Registry Container
 # run container
-mkdir -p /opt/kuberegistry
-mkdir -p /opt/kuberegistry/certs
-mkdir -p /opt/kuberegistry/data
-cd /opt/kuberegistry
-cp /home/kadmin/kubeconf/certs/kuberegistry.crt /opt/kuberegistry/certs/kuberegistry.crt
-cp /home/kadmin/kubeconf/certs/kuberegistry-key.pem /opt/kuberegistry/certs/kuberegistry-key.pem
+mkdir -p /opt/containers/kuberegistry
+mkdir -p /opt/containers/kuberegistry/certs
+mkdir -p /opt/containers/kuberegistry/data
+cd /opt/containers/kuberegistry
+cp /home/kadmin/kubeconf/build/certs/kuberegistry.pem /opt/containers/kuberegistry/certs/kuberegistry.crt
+cp /home/kadmin/kubeconf/build/certs/kuberegistry-key.pem /opt/containers/kuberegistry/certs/kuberegistry-key.pem
 tee build.sh <<EOF
 #!/usr/bin/env bash
 nerdctl run -d \
@@ -1014,7 +1045,7 @@ nerdctl run -d \
  -p 443:443 \
  registry:2
 EOF
-chmod +x /opt/kuberegistry/build.sh
+chmod +x /opt/containers/kuberegistry/build.sh
 ```
 
 -------------------------------------------------------------------------------

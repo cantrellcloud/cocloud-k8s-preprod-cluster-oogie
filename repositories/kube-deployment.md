@@ -28,17 +28,17 @@ alias nph='nerdctl push'
 #
 sudo -i
 mkdir /opt/ca
-mkdir /opt/ca/certs
-mkdir /opt/ca/crl
-mkdir /opt/ca/newcerts
-mkdir /opt/ca/private
-mkdir /opt/ca/requests
-touch /opt/ca/index.txt
-echo '1000' /opt/ca/serial
+mkdir /opt/copinekubeca01/certs
+mkdir /opt/copinekubeca01/crl
+mkdir /opt/copinekubeca01/newcerts
+mkdir /opt/copinekubeca01/private
+mkdir /opt/copinekubeca01/requests
+touch /opt/copinekubeca01/index.txt
+echo '1000' /opt/copinekubeca01/serial
 chmod 600 /opt/ca
 cd /opt/ca
 openssl genrsa -aes256 -out private/cakey.pem 4096
-openssl req -new -x509 -key /opt/ca/cakey.pem -out cacert.pem -days 3650
+openssl req -new -x509 -key /opt/copinekubeca01/cakey.pem -out cacert.pem -days 3650
 vi /usr/lib/ssl/openssl.cnf # [CA_default] dir = /opt/ca # Where everything is kept
 cd /opt/requests
 
@@ -47,7 +47,7 @@ openssl req
  -out offline-registry.csr 
  -newkey rsa:2048 
  -nodes 
- -keyout /opt/ca/private/offline-registry-key.pem 
+ -keyout /opt/copinekubeca01/private/offline-registry-key.pem 
  -extensions req_ext 
  -config offline-registry-san.cnf
 
@@ -59,13 +59,13 @@ openssl ca \
  -extfile offline-registry-san.cnf
 
 # merge server.crt and cacert.pem
-cat /opt/ca/certs/offline-registry.crt \
-/opt/ca/cacert.pem > \
-/opt/ca/certs/offline-registry-chained.crt
+cat /opt/copinekubeca01/certs/offline-registry.crt \
+/opt/copinekubeca01/cacert.pem > \
+/opt/copinekubeca01/certs/offline-registry-chained.crt
 
 # create subCA
-cat /opt/ca/certs/kubedev-cluster-subCA.crt /opt/ca/cacert.pem > /opt/ca/certs/kubedev-cluster-subCA-chained.crt
-cp /opt/ca/certs/kubedev-cluster-subCA-chained.crt /usr/local/share/ca-certificates/kubedev-cluster-subCA-chained.pem
+cat /opt/copinekubeca01/certs/kubedev-cluster-subCA.crt /opt/copinekubeca01/cacert.pem > /opt/copinekubeca01/certs/kubedev-cluster-subCA-chained.crt
+cp /opt/copinekubeca01/certs/kubedev-cluster-subCA-chained.crt /usr/local/share/ca-certificates/kubedev-cluster-subCA-chained.pem
 update-ca-certificates
 
 ###############################################################################
@@ -94,8 +94,8 @@ export KUBEADM_POD_SUBNET=10.244.0.0/16
 mkdir -p ${KUBEADM_OUTPUT_DIR}
 mkdir -p ${KUBEADM_PKI_HOMEDIR}
 envsubst < kubeadm-init-tmpl.yaml > ${KUBEADM_OUTPUT_DIR}/kubeadm-init-config.yaml
-cp /opt/ca/certs/kubedev-cluster-subCA-chained.crt ${KUBEADM_PKI_HOMEDIR}/ca.crt
-cp /opt/ca/private/kubedev-cluster-subCA-key.pem ${KUBEADM_PKI_HOMEDIR}/ca.key
+cp /opt/copinekubeca01/certs/kubedev-cluster-subCA-chained.crt ${KUBEADM_PKI_HOMEDIR}/ca.crt
+cp /opt/copinekubeca01/private/kubedev-cluster-subCA-key.pem ${KUBEADM_PKI_HOMEDIR}/ca.key
 kubeadm init phase certs all --config /opt/kubernetes/_clusters/kubedev/kubeadm-init-config.yaml
 export CA_CERT_HASH=$(openssl x509 -pubkey -in ${KUBEADM_PKI_HOMEDIR}/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* /sha256:/')
 source /home/adminlocal/kubeadm/generate-admin-client-certs.sh

@@ -1,0 +1,12 @@
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: JoinConfiguration
+nodeRegistration:
+  kubeletExtraArgs:
+    enable-controller-attach-detach: "false"
+    node-labels: "node-type=rook"
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: ${KUBECONF_API_ENDPOINT_INTERNAL}:6443
+    token: ${KUBECONF_TOKEN}
+    caCertHashes:
+    - ${CA_CERT_HASH}

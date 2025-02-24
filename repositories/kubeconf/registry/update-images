@@ -1,6 +1,6 @@
 #! /bin/bash
 
-for image in `cat /home/kadmin/kubeconf/kuberegistry/offline-images.list`; do echo $image; nerdctl pull $image; done
-for image in `cat /home/kadmin/kubeconf/kuberegistry/offline-images.list`; do echo $image; nerdctl tag $image `echo $image | sed -E 's#^[^/]+/#kuberegistry.k8.cantrellcloud.net/#'`; done
-for image in `cat /home/kadmin/kubeconf/kuberegistry/offline-images.list`; do echo $image; nerdctl push `echo $image | sed -E 's#^[^/]+/#kuberegistry.k8.cantrellcloud.net/#'`; done
+for image in `cat /home/kadmin/kubeconf/registry/offline-images.list`; do echo $image; nerdctl pull $image; done
+for image in `cat /home/kadmin/kubeconf/registry/offline-images.list`; do echo $image; nerdctl tag $image `echo $image | sed -E 's#^[^/]+/#kuberegistry.k8.cantrellcloud.net/#'`; done
+for image in `cat /home/kadmin/kubeconf/registry/offline-images.list`; do echo $image; nerdctl push `echo $image | sed -E 's#^[^/]+/#kuberegistry.k8.cantrellcloud.net/#'`; done
 
