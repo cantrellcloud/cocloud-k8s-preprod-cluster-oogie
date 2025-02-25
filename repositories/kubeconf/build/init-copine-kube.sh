@@ -3,9 +3,9 @@ clear
 echo
 echo
 echo Exporting variables
-export KUBECONF_CLUSTER_NAME=kubedev
-export KUBECONF_OUTPUT_DIR=/opt/kubernetes/_clusters/${KUBECONF_CLUSTER_NAME}
-export KUBECONF_BUILD_DIR=/home/kadmin/preprod-k8s-kubedev/build
+export KUBECONF_CLUSTER_NAME=copine-kube
+export KUBECONF_OUTPUT_DIR=/opt/kubeclusters/${KUBECONF_CLUSTER_NAME}
+export KUBECONF_BUILD_DIR=/home/kadmin/kubeconf/build
 export KUBECONF_REMOTE_DIR=/home/kadmin/kubernetes
 export KUBECONF_PKI_ALGORITHM=RSA-2048
 export KUBECONF_TOKEN=$(kubeadm token generate)
@@ -16,8 +16,8 @@ export KUBECONF_WORKER_IP_1=10.0.69.541
 export KUBECONF_WORKER_IP_2=10.0.69.551
 export KUBECONF_WORKER_IP_3=10.0.69.561
 export KUBECONF_WORKER_IP_4=10.0.69.571
-export KUBECONF_API_ENDPOINT_INTERNAL=kubedev.dev.local
-export KUBECONF_API_ENDPOINT_EXTERNAL=kubedev.dev.local
+export KUBECONF_API_ENDPOINT_INTERNAL=kube.k8.cantrellcloud.net
+export KUBECONF_API_ENDPOINT_EXTERNAL=copine-kube.cantrellcloud.net
 export KUBECONF_PKI_HOMEDIR=${KUBECONF_OUTPUT_DIR}/pki
 export KUBECONF_KUBECONFIG=${KUBECONF_OUTPUT_DIR}/config
 export KUBECONF_K8S_VERSION=1.32.2
