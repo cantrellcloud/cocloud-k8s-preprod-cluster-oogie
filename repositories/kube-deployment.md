@@ -77,9 +77,9 @@ vi /home/adminlocal/kubeadm/init-cluster.sh
 export KUBEADM_CLUSTER_NAME=kubedev
 export KUBEADM_OUTPUT_DIR=/opt/kubernetes/_clusters/${KUBEADM_CLUSTER_NAME}
 export KUBEADM_TOKEN=$(kubeadm token generate)
-export KUBEADM_API_ADVERTISE_IP_1=10.0.3.221
-export KUBEADM_API_ADVERTISE_IP_2=10.0.3.222
-export KUBEADM_API_ADVERTISE_IP_3=10.0.3.223
+export KUBEADM_API_IP_1=10.0.3.221
+export KUBEADM_API_IP_2=10.0.3.222
+export KUBEADM_API_IP_3=10.0.3.223
 export KUBEADM_WORKER_IP_1=10.0.3.224
 export KUBEADM_WORKER_IP_2=10.0.3.225
 export KUBEADM_WORKER_IP_3=10.0.3.226
@@ -105,9 +105,9 @@ CA_DATA_B64=$(base64 -w0 < $KUBEADM_PKI_HOMEDIR/ca.crt)
 envsubst < kubeadm-config-tmpl.yaml > ${KUBEADM_OUTPUT_DIR}/kubeconfig
 envsubst < kubeadm-join-config-tmpl.yaml > ${KUBEADM_OUTPUT_DIR}/kubeadm-join-config.yaml
 sed -i '/certificatesDir:/d' ${KUBEADM_OUTPUT_DIR}/kubeadm-init-config.yaml
-tar -cz --directory=${KUBEADM_PKI_HOMEDIR} . | ssh adminlocal@${KUBEADM_API_ADVERTISE_IP_1} 'mkdir -p /home/adminlocal/kubernetes/pki; tar -xz --directory=/home/adminlocal/kubernetes/pki/'
-scp -r ${KUBEADM_OUTPUT_DIR}/kubeadm-init-config.yaml adminlocal@${KUBEADM_API_ADVERTISE_IP_1}:/home/adminlocal/kubernetes/kubeadm-init-config.yaml
-scp -r /home/adminlocal/kubeadm/init-kube.sh adminlocal@${KUBEADM_API_ADVERTISE_IP_1}:/home/adminlocal/kubernetes/init-kube.sh
+tar -cz --directory=${KUBEADM_PKI_HOMEDIR} . | ssh adminlocal@${KUBEADM_API_IP_1} 'mkdir -p /home/adminlocal/kubernetes/pki; tar -xz --directory=/home/adminlocal/kubernetes/pki/'
+scp -r ${KUBEADM_OUTPUT_DIR}/kubeadm-init-config.yaml adminlocal@${KUBEADM_API_IP_1}:/home/adminlocal/kubernetes/kubeadm-init-config.yaml
+scp -r /home/adminlocal/kubeadm/init-kube.sh adminlocal@${KUBEADM_API_IP_1}:/home/adminlocal/kubernetes/init-kube.sh
 scp -r ${KUBEADM_OUTPUT_DIR}/kubeadm-join-config.yaml adminlocal@${KUBEADM_WORKER_IP_1}:/home/adminlocal/kubeadm-join-config.yaml
 scp -r ${KUBEADM_OUTPUT_DIR}/kubeadm-join-config.yaml adminlocal@${KUBEADM_WORKER_IP_2}:/home/adminlocal/kubeadm-join-config.yaml
 scp -r ${KUBEADM_OUTPUT_DIR}/kubeadm-join-config.yaml adminlocal@${KUBEADM_WORKER_IP_3}:/home/adminlocal/kubeadm-join-config.yaml
@@ -164,7 +164,7 @@ bootstrapTokens:
   - authentication
 kind: InitConfiguration
 localAPIEndpoint:
-  advertiseAddress: ${KUBEADM_API_ADVERTISE_IP_1}
+  advertiseAddress: ${KUBEADM_API_IP_1}
   bindPort: 6443
 ---
 apiServer:
@@ -179,9 +179,9 @@ encryptionAlgorithm: RSA-2048
 etcd:
   external:
     endpoints:
-      - "https://${KUBEADM_API_ADVERTISE_IP_1}:2379"
-      - "https://${KUBEADM_API_ADVERTISE_IP_2}:2379"
-      - "https://${KUBEADM_API_ADVERTISE_IP_3}:2379"
+      - "https://${KUBEADM_API_IP_1}:2379"
+      - "https://${KUBEADM_API_IP_2}:2379"
+      - "https://${KUBEADM_API_IP_3}:2379"
   local:
     dataDir: /var/lib/etcd
 imageRepository: registry.k8s.io

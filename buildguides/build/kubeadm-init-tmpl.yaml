@@ -9,7 +9,7 @@ bootstrapTokens:
   - signing
   - authentication
 localAPIEndpoint:
-  advertiseAddress: ${KUBECONF_API_ADVERTISE_IP_1}
+  advertiseAddress: ${KUBECONF_API_IP_1}
   bindPort: 6443
 ---
 apiVersion: kubeadm.k8s.io/v1beta4

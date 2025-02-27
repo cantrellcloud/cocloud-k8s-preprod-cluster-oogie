@@ -12,9 +12,9 @@ export KUBECONF_BUILD_DIR=/home/adminlocal/preprod-k8s-kubedev/build
 export KUBECONF_REMOTE_DIR=/home/adminlocal/kubernetes
 export KUBECONF_PKI_ALGORITHM=RSA-2048
 export KUBECONF_TOKEN=$(kubeadm token generate)
-export KUBECONF_API_ADVERTISE_IP_1=10.0.4.100
-export KUBECONF_API_ADVERTISE_IP_2=10.0.4.101
-export KUBECONF_API_ADVERTISE_IP_3=10.0.4.102
+export KUBECONF_API_IP_1=10.0.4.100
+export KUBECONF_API_IP_2=10.0.4.101
+export KUBECONF_API_IP_3=10.0.4.102
 export KUBECONF_WORKER_IP_1=10.0.4.125
 export KUBECONF_WORKER_IP_2=10.0.4.126
 export KUBECONF_WORKER_IP_3=10.0.4.127
@@ -88,17 +88,17 @@ echo
 echo
 echo Tar and copy...
 echo 
-tar -cz --directory=${KUBECONF_PKI_HOMEDIR} . | ssh adminlocal@${KUBECONF_API_ADVERTISE_IP_1} 'mkdir -p '${KUBECONF_REMOTE_DIR}'/pki; tar -xz --directory='${KUBECONF_REMOTE_DIR}'/pki/'
+tar -cz --directory=${KUBECONF_PKI_HOMEDIR} . | ssh adminlocal@${KUBECONF_API_IP_1} 'mkdir -p '${KUBECONF_REMOTE_DIR}'/pki; tar -xz --directory='${KUBECONF_REMOTE_DIR}'/pki/'
 echo
 echo ---
 echo
-echo Copy init-kube to... ${KUBECONF_API_ADVERTISE_IP_1}
-scp ${KUBECONF_BUILD_DIR}/init-kube.sh adminlocal@${KUBECONF_API_ADVERTISE_IP_1}:${KUBECONF_REMOTE_DIR}/init-kube.sh
+echo Copy init-kube to... ${KUBECONF_API_IP_1}
+scp ${KUBECONF_BUILD_DIR}/init-kube.sh adminlocal@${KUBECONF_API_IP_1}:${KUBECONF_REMOTE_DIR}/init-kube.sh
 echo
 echo ---
 echo
-echo Copy kubeadm-init-config to... ${KUBECONF_API_ADVERTISE_IP_1}
-scp ${KUBECONF_OUTPUT_DIR}/kubeadm-init-config.yaml adminlocal@${KUBECONF_API_ADVERTISE_IP_1}:${KUBECONF_REMOTE_DIR}/kubeadm-init-config.yaml
+echo Copy kubeadm-init-config to... ${KUBECONF_API_IP_1}
+scp ${KUBECONF_OUTPUT_DIR}/kubeadm-init-config.yaml adminlocal@${KUBECONF_API_IP_1}:${KUBECONF_REMOTE_DIR}/kubeadm-init-config.yaml
 echo
 echo ---
 echo
@@ -127,8 +127,8 @@ echo
 echo
 echo ---
 echo
-echo Initialize cluster... ssh -t adminlocal@${KUBECONF_API_ADVERTISE_IP_1} sudo ${KUBECONF_REMOTE_DIR}/init-kube.sh
-ssh -t adminlocal@${KUBECONF_API_ADVERTISE_IP_1} sudo ${KUBECONF_REMOTE_DIR}/init-kube.sh
+echo Initialize cluster... ssh -t adminlocal@${KUBECONF_API_IP_1} sudo ${KUBECONF_REMOTE_DIR}/init-kube.sh
+ssh -t adminlocal@${KUBECONF_API_IP_1} sudo ${KUBECONF_REMOTE_DIR}/init-kube.sh
 echo
 echo ---
 echo
