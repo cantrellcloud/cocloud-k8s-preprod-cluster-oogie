@@ -1074,19 +1074,21 @@ chmod +x /opt/containers/kuberegistry/build.sh
 - On NFS Export server
   
 ```bash
-  apt-get install nfs-kernel-server -y
-  mkdir -p /opt/nfsshares
-  mkdir -p /srv/nfs4/nfsshares
-  mount --bind /opt/nfsshares /srv/nfs4/nfsshares
-  vi /etc/fstab
-    /opt/nfsshares /srv/nfs4/nfsshares none bind 0 0
-  vi /etc/exports
-    /shared/folder *(rw,no_root_squash,insecure,async,no_subtree_check,anonuid=1000,anongid=1000)
-  exportfs -ar
-  exportfs -v
-  ufw allow 2049/tcp
-  ufw allow 2049/udp
-  reboot
+apt-get install nfs-kernel-server -y
+mkdir -p /opt/nfsshares
+mkdir -p /srv/nfs4/nfsshares
+mount --bind /opt/nfsshares /srv/nfs4/nfsshares
+
+vi /etc/fstab
+  /opt/nfsshares /srv/nfs4/nfsshares none bind 0 0
+vi /etc/exports
+  /srv/nfs4/nfsshares *(rw,no_root_squash,insecure,async,no_subtree_check,anonuid=1000,anongid=1000)
+
+exportfs -ar
+exportfs -v
+ufw allow 2049/tcp
+ufw allow 2049/udp
+reboot
 ```
   
 - On each Worker Node
@@ -1094,10 +1096,10 @@ chmod +x /opt/containers/kuberegistry/build.sh
 ```bash
   apt-get install nfs-common -y
   mkdir /opt/nfsshares
-  mount -t nfs -o vers=4 10.0.69.41:/srv/nfs4/nfsshares /opt/nfsshares
+  mount -t nfs -o vers=4 10.0.69.62:/srv/nfs4/nfsshares /opt/nfsshares
   df -h
   vi /etc/fstab
-    10.0.69.41:/srv/nfs4/nfsserver /opt/nfsshares nfs defaults,timeo=900,retrans=5,_netdev 0 0
+    10.0.69.62:/srv/nfs4/nfsserver /opt/nfsshares nfs defaults,timeo=900,retrans=5,_netdev 0 0
   reboot
 ```
 

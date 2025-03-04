@@ -24,6 +24,52 @@
 7. **Verify the installation**:
    helm version
 
+
+### Installing Ingress-Nginx Controller
+
+Install MetalLB
+
+```bash
+kubectl edit configmap -n kube-system kube-proxy
+
+# Enable strictARP for ipvs:
+# see what changes would be made, returns nonzero returncode if different
+kubectl get configmap kube-proxy -n kube-system -o yaml | \
+sed -e "s/strictARP: false/strictARP: true/" | \
+kubectl diff -f - -n kube-system
+
+# actually apply the changes, returns nonzero returncode on errors only
+kubectl get configmap kube-proxy -n kube-system -o yaml | \
+sed -e "s/strictARP: false/strictARP: true/" | \
+kubectl apply -f - -n kube-system
+
+# add MetalLB repo and install
+helm repo add metallb https://metallb.github.io/metallb
+helm repo update
+helm install metallb metallb/metallb --version 0.14.9 --namespace metallb-system --create-namespace -f values.yaml
+```
+
+
+helm install ingress-nginx ingress-nginx/ingress-nginx --version 4.12.0 --namespace ingress-nginx --create-namespace
+
+
+helm pull ingress-nginx/ingress-nginx --version 4.12.0 --untar
+
+
+
+
+
+Creating TLS Secret
+
+Unless otherwise mentioned, the TLS secret used in examples is a 2048 bit RSA key/cert pair with an arbitrarily chosen hostname, created as follows
+
+```bash
+openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=nginxsvc/O=nginxsvc"
+kubectl create secret tls tls-secret --key tls.key --cert tls.crt
+```
+
+
+
 ## Steps to install Calico CNI v3.29 on your Kubernetes v1.32 cluster using Helm
 
 1. **Add the Calico Helm repository**:
@@ -35,6 +81,7 @@
 
 3. **Install the Tigera operator and custom resource definitions using the Helm chart**:
    helm install calico projectcalico/tigera-operator --version v3.29.2 --namespace tigera-operator
+   helm install calico ./tigera-operator-v3.29.2.tgz --namespace tigera-operator --create-namespace
 
 4. **Verify that all the pods are running**:
    watch kubectl get pods -n calico-system
