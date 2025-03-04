@@ -1,0 +1,102 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 4096 (0x1000)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=US, ST=Florida, L=New Port Richey, O=Cantrell Cloud ES, OU=InfoSys, CN=COPINE Kubernetes Issuing Certificate Authority 01
+        Validity
+            Not Before: Feb 23 15:42:53 2025 GMT
+            Not After : Feb 21 15:42:53 2035 GMT
+        Subject: C=US, ST=Florida, O=Cantrell Cloud ES, OU=InfoSys, CN=Kubernetes Cluster copine-kube CA
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:b8:a6:1c:58:76:a7:ec:b1:de:84:92:3e:db:70:
+                    06:0b:93:b9:f5:15:bb:a2:77:d4:17:e4:b2:74:27:
+                    07:98:0c:1a:ad:b1:e4:21:b5:22:53:dc:21:0d:cc:
+                    82:1e:d7:7c:2b:3d:62:e0:a1:89:5c:41:5b:57:55:
+                    cd:ba:bf:df:38:33:87:13:53:66:0d:bf:9b:86:68:
+                    4a:f3:38:c7:6f:3a:95:ad:a0:08:56:1a:f7:8b:62:
+                    ab:8b:ae:a3:d7:ff:1e:9a:64:23:19:36:b1:e5:a7:
+                    5d:08:9a:16:7a:c7:af:e9:3d:cd:e6:69:00:8d:3b:
+                    18:62:dc:50:96:c7:d6:4b:a7:6f:2a:5b:b6:86:a4:
+                    e2:3f:c6:ee:40:1b:62:fe:a3:60:2a:03:2a:b7:96:
+                    bd:75:ec:63:35:3e:84:41:0c:82:e4:51:d8:48:35:
+                    fb:5e:b5:37:9a:24:c5:87:65:1b:2b:16:1c:93:66:
+                    57:84:94:88:56:3a:8b:40:fc:ea:74:ac:d0:0b:8e:
+                    b2:3e:53:a1:df:89:98:1d:5c:a7:f1:38:ad:67:1f:
+                    03:a4:f0:c6:3f:ca:43:1e:d2:c3:7b:92:5e:a5:58:
+                    f2:30:04:3d:b2:d4:03:fd:c9:25:27:d7:b6:83:cc:
+                    ad:81:26:59:a9:19:14:c1:90:4f:84:62:f3:d7:dc:
+                    f7:79
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Subject Key Identifier: 
+                33:51:E6:4E:DA:29:76:C5:26:30:26:D3:2E:B4:27:34:2F:1C:18:A9
+            X509v3 Authority Key Identifier: 
+                27:BF:52:F0:9E:EF:9C:A0:1B:14:34:53:CC:75:24:CD:15:43:F8:EA
+            X509v3 Basic Constraints: critical
+                CA:TRUE, pathlen:1
+            X509v3 Key Usage: critical
+                Digital Signature, Certificate Sign, CRL Sign
+    Signature Algorithm: sha256WithRSAEncryption
+    Signature Value:
+        86:a3:40:22:c1:00:95:de:af:1a:52:49:1b:e4:43:8c:53:ec:
+        54:20:33:8b:64:12:df:63:8c:ac:1a:eb:7f:07:16:a8:9a:3f:
+        ab:92:61:d0:a9:61:ab:92:cf:16:2b:d2:15:12:3e:db:ba:0d:
+        56:82:34:53:fd:1a:7f:1b:d0:53:44:0d:11:64:6e:f6:e8:96:
+        80:d3:b2:ca:54:91:aa:8f:ab:e4:75:7d:65:3a:7a:ee:91:9b:
+        ff:cd:37:1c:a5:8f:f1:24:54:92:b6:ff:71:51:6e:39:57:1c:
+        fc:87:dd:ca:f7:51:26:3d:f6:13:c6:13:4f:d0:87:40:74:05:
+        4a:97:8e:cb:88:0d:a9:a1:d0:ea:de:6d:5f:85:f3:09:d2:c8:
+        3d:a7:4f:ef:9e:2b:d8:14:70:66:aa:29:c5:c2:6b:cd:db:58:
+        3b:06:81:6c:c0:77:26:3c:bf:07:3b:04:a9:9f:e0:ec:3c:1f:
+        52:7a:ef:77:3d:70:12:44:62:44:8d:3b:82:e0:af:4e:6f:97:
+        ef:d3:52:71:41:88:77:50:98:d6:4f:8f:a2:e4:bb:96:53:c9:
+        be:0d:8f:7c:98:0e:20:b5:8e:56:ca:b6:b8:a2:9a:a6:0d:97:
+        41:f5:ee:14:c2:64:6d:13:a3:2f:21:03:6c:74:c9:95:af:64:
+        39:cb:a7:81:c8:28:e2:89:83:19:c1:98:fb:00:b4:d0:33:9d:
+        cd:d1:59:20:ce:ea:9c:fa:c5:c2:06:c0:5b:69:dc:9d:8e:55:
+        e8:63:e2:63:14:61:cd:f7:e8:aa:ac:cd:d0:2a:24:e1:30:14:
+        f2:9a:1d:4d:0d:d3:70:b9:1a:d0:8e:8f:c4:7a:03:97:d4:d5:
+        a4:94:90:67:66:d5:3a:55:bd:20:84:34:b5:5d:b9:6a:04:0d:
+        2c:1d:05:ba:3b:a8:1e:ce:0f:fc:a0:0c:0b:15:c2:9a:55:01:
+        26:9e:e4:78:30:d0:96:19:d9:df:5c:25:12:d5:aa:88:90:8f:
+        bd:06:7d:de:a9:66:56:ca:26:be:f6:c0:3e:62:ab:c6:bd:21:
+        2c:da:54:dc:bb:b9:45:5d:2e:ed:0e:7f:41:1a:6b:33:7f:27:
+        26:d8:d6:f0:db:67:2c:66:2e:76:3d:c7:0e:6d:3c:e5:73:41:
+        a6:20:82:53:16:84:79:72:04:62:a4:de:e9:6f:90:e9:5d:5f:
+        d9:bf:1c:80:c5:ed:b5:fa:e3:d4:35:67:2c:2f:8f:78:9a:e7:
+        28:c1:40:0e:25:ee:bc:7f:ed:6e:e7:1f:ea:1c:80:1b:9d:35:
+        7c:03:c7:7a:39:b0:e9:35:4b:fb:cf:b9:30:57:ce:2a:5b:19:
+        24:39:9a:b1:63:3f:f9:59
+-----BEGIN CERTIFICATE-----
+MIIFADCCAuigAwIBAgICEAAwDQYJKoZIhvcNAQELBQAwgaQxCzAJBgNVBAYTAlVT
+MRAwDgYDVQQIDAdGbG9yaWRhMRgwFgYDVQQHDA9OZXcgUG9ydCBSaWNoZXkxGjAY
+BgNVBAoMEUNhbnRyZWxsIENsb3VkIEVTMRAwDgYDVQQLDAdJbmZvU3lzMTswOQYD
+VQQDDDJDT1BJTkUgS3ViZXJuZXRlcyBJc3N1aW5nIENlcnRpZmljYXRlIEF1dGhv
+cml0eSAwMTAeFw0yNTAyMjMxNTQyNTNaFw0zNTAyMjExNTQyNTNaMHkxCzAJBgNV
+BAYTAlVTMRAwDgYDVQQIDAdGbG9yaWRhMRowGAYDVQQKDBFDYW50cmVsbCBDbG91
+ZCBFUzEQMA4GA1UECwwHSW5mb1N5czEqMCgGA1UEAwwhS3ViZXJuZXRlcyBDbHVz
+dGVyIGNvcGluZS1rdWJlIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC
+AQEAuKYcWHan7LHehJI+23AGC5O59RW7onfUF+SydCcHmAwarbHkIbUiU9whDcyC
+Htd8Kz1i4KGJXEFbV1XNur/fODOHE1NmDb+bhmhK8zjHbzqVraAIVhr3i2Kri66j
+1/8emmQjGTax5addCJoWesev6T3N5mkAjTsYYtxQlsfWS6dvKlu2hqTiP8buQBti
+/qNgKgMqt5a9dexjNT6EQQyC5FHYSDX7XrU3miTFh2UbKxYck2ZXhJSIVjqLQPzq
+dKzQC46yPlOh34mYHVyn8TitZx8DpPDGP8pDHtLDe5JepVjyMAQ9stQD/cklJ9e2
+g8ytgSZZqRkUwZBPhGLz19z3eQIDAQABo2YwZDAdBgNVHQ4EFgQUM1HmTtopdsUm
+MCbTLrQnNC8cGKkwHwYDVR0jBBgwFoAUJ79S8J7vnKAbFDRTzHUkzRVD+OowEgYD
+VR0TAQH/BAgwBgEB/wIBATAOBgNVHQ8BAf8EBAMCAYYwDQYJKoZIhvcNAQELBQAD
+ggIBAIajQCLBAJXerxpSSRvkQ4xT7FQgM4tkEt9jjKwa638HFqiaP6uSYdCpYauS
+zxYr0hUSPtu6DVaCNFP9Gn8b0FNEDRFkbvboloDTsspUkaqPq+R1fWU6eu6Rm//N
+Nxylj/EkVJK2/3FRbjlXHPyH3cr3USY99hPGE0/Qh0B0BUqXjsuIDamh0OrebV+F
+8wnSyD2nT++eK9gUcGaqKcXCa83bWDsGgWzAdyY8vwc7BKmf4Ow8H1J673c9cBJE
+YkSNO4Lgr05vl+/TUnFBiHdQmNZPj6Lku5ZTyb4Nj3yYDiC1jlbKtriimqYNl0H1
+7hTCZG0Toy8hA2x0yZWvZDnLp4HIKOKJgxnBmPsAtNAznc3RWSDO6pz6xcIGwFtp
+3J2OVehj4mMUYc336KqszdAqJOEwFPKaHU0N03C5GtCOj8R6A5fU1aSUkGdm1TpV
+vSCENLVduWoEDSwdBbo7qB7OD/ygDAsVwppVASae5Hgw0JYZ2d9cJRLVqoiQj70G
+fd6pZlbKJr72wD5iq8a9ISzaVNy7uUVdLu0Of0EaazN/JybY1vDbZyxmLnY9xw5t
+POVzQaYgglMWhHlyBGKk3ulvkOldX9m/HIDF7bX649Q1Zywvj3ia5yjBQA4l7rx/
+7W7nH+ocgBudNXwDx3o5sOk1S/vPuTBXzipbGSQ5mrFjP/lZ
+-----END CERTIFICATE-----

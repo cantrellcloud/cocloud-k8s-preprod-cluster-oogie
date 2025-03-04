@@ -17,7 +17,6 @@ nodeRegistration:
     value: "false"
   - name: node-labels
     value: node-type=rook
-  name: ${KUBECONF_API_IP_1}
   taints: null
 timeouts:
   controlPlaneComponentHealthCheck: 4m0s

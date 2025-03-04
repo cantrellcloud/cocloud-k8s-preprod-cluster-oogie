@@ -973,10 +973,10 @@ spec:
                 - type: string
                 description: 'BPFPSNATPorts sets the range from which we randomly
                   pick a port if there is a source port collision. This should be
-                  within the ephemeral range as defined by RFC 6056 (1024â€“65535) and
+                  within the ephemeral range as defined by RFC 6056 (1024–65535) and
                   preferably outside the  ephemeral ranges used by common operating
-                  systems. Linux uses 32768â€“60999, while others mostly use the IANA
-                  defined range 49152â€“65535. It is not necessarily a problem if this
+                  systems. Linux uses 32768–60999, while others mostly use the IANA
+                  defined range 49152–65535. It is not necessarily a problem if this
                   range overlaps with the operating systems. Both ends of the range
                   are inclusive. [Default: 20000:29999]'
                 pattern: ^.*
@@ -4440,7 +4440,7 @@ spec:
         # It can be deleted if this is a fresh installation, or if you have already
         # upgraded to use calico-ipam.
         - name: upgrade-ipam
-          image: docker.io/calico/cni:v3.25.0
+          image: kuberegistry.k8.cantrellcloud.net/cni:v3.29.1
           imagePullPolicy: IfNotPresent
           command: ["/opt/cni/bin/calico-ipam", "-upgrade"]
           envFrom:
@@ -4468,7 +4468,7 @@ spec:
         # This container installs the CNI binaries
         # and CNI network config file on each node.
         - name: install-cni
-          image: docker.io/calico/cni:v3.25.0
+          image: kuberegistry.k8.cantrellcloud.net/cni:v3.29.1
           imagePullPolicy: IfNotPresent
           command: ["/opt/cni/bin/install"]
           envFrom:
@@ -4511,7 +4511,7 @@ spec:
         # i.e. bpf at /sys/fs/bpf and cgroup2 at /run/calico/cgroup. Calico-node initialisation is executed
         # in best effort fashion, i.e. no failure for errors, to not disrupt pod creation in iptable mode.
         - name: "mount-bpffs"
-          image: docker.io/calico/node:v3.25.0
+          image: kuberegistry.k8.cantrellcloud.net/node:v3.29.1
           imagePullPolicy: IfNotPresent
           command: ["calico-node", "-init", "-best-effort"]
           volumeMounts:
@@ -4537,7 +4537,7 @@ spec:
         # container programs network policy and routes on each
         # host.
         - name: calico-node
-          image: docker.io/calico/node:v3.25.0
+          image: kuberegistry.k8.cantrellcloud.net/node:v3.29.1
           imagePullPolicy: IfNotPresent
           envFrom:
           - configMapRef:
@@ -4598,8 +4598,8 @@ spec:
             # The default IPv4 pool to create on startup if none exists. Pod IPs will be
             # chosen from this range. Changing this value after installation will have
             # no effect. This should fall within `--cluster-cidr`.
-            # - name: CALICO_IPV4POOL_CIDR
-            #   value: "192.168.0.0/16"
+            - name: CALICO_IPV4POOL_CIDR
+              value: "10.213.0.0/22"
             # Disable file logging so `kubectl logs` works.
             - name: CALICO_DISABLE_FILE_LOGGING
               value: "true"
@@ -4754,7 +4754,7 @@ spec:
       priorityClassName: system-cluster-critical
       containers:
         - name: calico-kube-controllers
-          image: docker.io/calico/kube-controllers:v3.25.0
+          image: kuberegistry.k8.cantrellcloud.net/kube-controllers:v3.29.1
           imagePullPolicy: IfNotPresent
           env:
             # Choose which controllers to run.

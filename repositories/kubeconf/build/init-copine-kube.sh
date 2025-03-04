@@ -135,16 +135,16 @@ ssh -t kadmin@${KUBECONF_API_IP_1} sudo ${KUBECONF_REMOTE_DIR}/init-kube.sh
 echo
 echo ---
 echo
-echo Join worker nodes... ${KUBECONF_WORKER_IP_1}, ${KUBECONF_WORKER_IP_2}, ${KUBECONF_WORKER_IP_3} #, ${KUBECONF_WORKER_IP_4}
-ssh -t kadmin@${KUBECONF_WORKER_IP_1} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
-ssh -t kadmin@${KUBECONF_WORKER_IP_2} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
-ssh -t kadmin@${KUBECONF_WORKER_IP_3} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
+#echo Join worker nodes... ${KUBECONF_WORKER_IP_1}, ${KUBECONF_WORKER_IP_2}, ${KUBECONF_WORKER_IP_3} #, ${KUBECONF_WORKER_IP_4}
+#ssh -t kadmin@${KUBECONF_WORKER_IP_1} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
+#ssh -t kadmin@${KUBECONF_WORKER_IP_2} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
+#ssh -t kadmin@${KUBECONF_WORKER_IP_3} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
 #ssh -t kadmin@${KUBECONF_WORKER_IP_4} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
 echo
 echo ---
 echo
-echo Label nodes... 
-./label-worker-nodes.sh
+#echo Label nodes... 
+#${KUBECONF_BUILD_DIR}/label-worker-nodes.sh
 echo
 echo ---
 echo
