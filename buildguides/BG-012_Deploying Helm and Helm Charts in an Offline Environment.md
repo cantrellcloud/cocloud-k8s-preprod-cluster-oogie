@@ -2,114 +2,119 @@
 
 ## Install Helm
 
-1. **Update your package list**:
-   sudo apt-get update
+sudo apt-get update
+sudo apt-get install apt-transport-https --yes
+sudo apt-get install ca-certificates curl software-properties-common
+curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
 
-2. **Install necessary packages**:
-   sudo apt-get install apt-transport-https --yes
-   sudo apt-get install ca-certificates curl software-properties-common
+## Flannel
 
-3. **Add the Helm GPG key**:
-   curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-
-4. **Add the Helm repository**:
-   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-
-5. **Update your package list again**:
-   sudo apt-get update
-
-6. **Install Helm**:
-   sudo apt-get install helm
-
-7. **Verify the installation**:
-   helm version
-
-
-### Installing Ingress-Nginx Controller
-
-Install MetalLB
+**Needs manual creation of namespace to avoid helm error**
 
 ```bash
+kubectl create namespace kube-flannel
+kubectl label --overwrite namespace kube-flannel pod-security.kubernetes.io/enforce=privileged
+
+helm repo add flannel https://flannel-io.github.io/flannel/
+helm repo update
+helm pull flannel/flannel --untar --untardir ../helm/charts/
+
+helm package ../helm/charts/<chart-name> -d ../helm/packages/
+
+# by package
+helm install flannel ../helm/packages/<chart-name>.tzg --namespace kube-flannel --set podCidr="10.255.0.0/16"
+
+# by online Internet
+helm upgrade --install flannel --set podCidr="10.213.0.0/21" --namespace kube-flannel flannel/flannel
+
+```
+
+## Calico
+
+```bash
+helm repo add projectcalico https://docs.tigera.io/calico/charts
+helm repo update
+helm pull projectcalico/tigera-operator --version v3.29.2 --untar --untardir .
+
+helm package ../helm/charts/<chart-name> -d ../helm/packages/
+helm install calico ../helm/packages/<chart-name>.tzg --namespace tigera-operator --create-namespace
+
+helm upgrade --install calico ${HELM_DIR}/packages/tigera-operator-v3.29.2.tgz --namespace tigera-operator --create-namespace
+curl -L https://github.com/projectcalico/calico/releases/download/v3.29.2/calicoctl-linux-amd64 -o calicoctl
+chmod +x ./calicoctl
+cp ./calicoctl /usr/local/bin/
+
+alias cali=calicoctl
+cali ipam show --show-blocks
+
+# from a worker node
+sudo calicoctl node status
+```
+
+## MetalLB
+
 kubectl edit configmap -n kube-system kube-proxy
 
-# Enable strictARP for ipvs:
-# see what changes would be made, returns nonzero returncode if different
-kubectl get configmap kube-proxy -n kube-system -o yaml | \
-sed -e "s/strictARP: false/strictARP: true/" | \
-kubectl diff -f - -n kube-system
-
-# actually apply the changes, returns nonzero returncode on errors only
-kubectl get configmap kube-proxy -n kube-system -o yaml | \
-sed -e "s/strictARP: false/strictARP: true/" | \
-kubectl apply -f - -n kube-system
-
-# add MetalLB repo and install
-helm repo add metallb https://metallb.github.io/metallb
-helm repo update
-helm install metallb metallb/metallb --version 0.14.9 --namespace metallb-system --create-namespace -f values.yaml
+```text
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: "ipvs"
+ipvs:
+  strictARP: true
 ```
-
-
-helm install ingress-nginx ingress-nginx/ingress-nginx --version 4.12.0 --namespace ingress-nginx --create-namespace
-
-
-helm pull ingress-nginx/ingress-nginx --version 4.12.0 --untar
-
-
-
-
-
-Creating TLS Secret
-
-Unless otherwise mentioned, the TLS secret used in examples is a 2048 bit RSA key/cert pair with an arbitrarily chosen hostname, created as follows
 
 ```bash
-openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=nginxsvc/O=nginxsvc"
-kubectl create secret tls tls-secret --key tls.key --cert tls.crt
+kubectl create namespace metallb-system
+kubectl label --overwrite namespace metallb-system pod-security.kubernetes.io/enforce=privileged
+kubectl label --overwrite namespace metallb-system pod-security.kubernetes.io/audit=privileged
+kubectl label --overwrite namespace metallb-system pod-security.kubernetes.io/warn=privileged
+
+# by package
+helm upgrade --install metallb ../../packages --namespace metallb-system
+
+# by online Internet
+helm upgrade --install metallb metallb/metallb --namespace metallb-system
 ```
 
+## Ingress-Nginx
 
+```bash
+helm upgrade --install ingress-nginx ../../packages/ingress-nginx-4.12.0.tgz --namespace ingress-nginx --create-namespace
 
-## Steps to install Calico CNI v3.29 on your Kubernetes v1.32 cluster using Helm
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace -set "controller.extraArgs.enable-ssl-passthrough=true
+```
 
-1. **Add the Calico Helm repository**:
-   helm repo add projectcalico https://docs.tigera.io/calico/charts
-   helm repo update
+## Dashboard
 
-2. **Create the `tigera-operator` namespace**:
-   kubectl create namespace tigera-operator
+```bash
+helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+helm repo update
+helm pull kubernetes-dashboard/kubernetes-dashboard --untar --untardir ../helm/charts/
 
-3. **Install the Tigera operator and custom resource definitions using the Helm chart**:
-   helm install calico projectcalico/tigera-operator --version v3.29.2 --namespace tigera-operator
-   helm install calico ./tigera-operator-v3.29.2.tgz --namespace tigera-operator --create-namespace
+helm package ../helm/charts/<chart-name> -d ../helm/packages/
+helm upgrade --install kubernetes-dashboard ../helm/packages/kubernetes-dashboard-7.11.0.tgz --namespace kubernetes-dashboard --create-namespace
+```
 
-4. **Verify that all the pods are running**:
-   watch kubectl get pods -n calico-system
-   Wait until each pod has the status `Running`.
+## Antrea
 
-## To extract the images needed for each Helm chart for use in an offline environment, you can follow these steps
+```bash
+helm repo add antrea https://charts.antrea.io
+helm repo update
+helm pull antrea/antrea --untar --untardir ../helm/charts/
 
-1. **Render the Helm chart to YAML**:
-   helm template <chart-name> --namespace <namespace> > rendered.yaml
+helm package ../helm/charts/<chart-name> -d ../helm/packages/
+helm install antrea ../helm/packages/<chart-name>.tgz -namespace kong --create-namespace
+helm install flow-aggregator ../helm/packages/<chart-name>.tgz -namespace kong --create-namespace
+```
 
-2. **Extract the image references**:
-   You can use `yq` or `grep` to extract the image references from the rendered YAML file. Here are two methods:
+- Upgrade
+  - To upgrade the Antrea Helm chart, use the following commands:
+  - Upgrading CRDs requires an extra step; see explanation below
+kubectl apply -f https://github.com/antrea-io/antrea/releases/download/<TAG>/antrea-crds.yml
+helm upgrade antrea antrea/antrea --namespace kube-system --version <TAG>
 
-   - Using `yq`:
-     yq e '..|.image? | select(.)' rendered.yaml | sort -u
+## Pihole
 
-   - Using `grep` and `sed`:
-     grep 'image:' rendered.yaml | sed -e 's/[ ]*image:[ ]*//' -e 's/\"//g' | sort -u
-
-3. **Pull the images**:
-   On a machine with internet access, pull the images:
-   docker pull <image-name>
-
-4. **Save the images to tar files**:
-   docker save -o <image-name>.tar <image-name>
-
-5. **Transfer the tar files to the offline environment**:
-   Use a USB drive or any other method to transfer the tar files to the offline environment.
-
-6. **Load the images into the offline Docker registry**:
-   docker load -i <image-name>.tar

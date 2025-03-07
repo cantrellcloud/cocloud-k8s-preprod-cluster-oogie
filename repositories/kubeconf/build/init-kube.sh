@@ -12,7 +12,7 @@ ufw allow 10250/tcp
 ufw allow 10259/tcp
 ufw allow 10257/tcp
 # enable firewall
-ufw enable
+ufw --force enable
 
 mkdir -p /etc/kubernetes/pki
 cp -r /home/kadmin/kubernetes/pki/ /etc/kubernetes/
