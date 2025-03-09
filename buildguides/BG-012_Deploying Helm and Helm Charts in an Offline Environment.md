@@ -79,6 +79,12 @@ helm upgrade --install metallb ../../packages --namespace metallb-system
 helm upgrade --install metallb metallb/metallb --namespace metallb-system
 ```
 
+Create ingress-nginx-controller-ip
+
+```bash
+kubectl create -f ./ingress-nginx-controller-ip.yaml
+```
+
 ## Ingress-Nginx
 
 ```bash
@@ -86,6 +92,48 @@ helm upgrade --install ingress-nginx ../../packages/ingress-nginx-4.12.0.tgz --n
 
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace -set "controller.extraArgs.enable-ssl-passthrough=true
 ```
+
+## Longhorn Storage
+
+```bash
+echo Run Environment check... 
+curl -sSfL https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/scripts/environment_check.sh | bash
+
+helm repo add longhorn https://charts.longhorn.io
+helm repo update
+helm upgrade --install longhorn ../packages/longhorn-1.8.1.tgz --namespace longhorn-system --create-namespace -f ./values.yaml
+```
+
+Create Longhorn Auth, Ingress, and Request IP
+
+```bash
+echo Creating longhorn basic-auth...
+source ./longhorn-basic-auth.sh
+echo
+echo--
+echo
+echo Creating Ingress using longhorn-frontend.yaml...
+kubectl -n longhorn-system create -f longhorn-ingress.yaml
+echo
+echo ---
+echo
+echo Requesting Longhorn IP address...
+kubectl create -f ./longhorn-ip.yaml
+echo
+echo ---
+echo
+```
+
+Verify Longhorn Frontend service has External IP
+
+```bash
+kubectl -n longhorn-system svc longhorn-frontend
+```
+
+```bash
+annotate node <node_name> volumes.kubernetes.io/controller-managed-attach-detach=true
+```
+
 
 ## Dashboard
 
@@ -117,4 +165,11 @@ kubectl apply -f https://github.com/antrea-io/antrea/releases/download/<TAG>/ant
 helm upgrade antrea antrea/antrea --namespace kube-system --version <TAG>
 
 ## Pihole
+
+```bash
+helm repo add mojo2600 https://mojo2600.github.io/pihole-kubernetes/
+helm upgrade -i pihole mojo2600/pihole -f values.yaml
+```
+
+
 
