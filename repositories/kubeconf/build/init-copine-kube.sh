@@ -30,8 +30,8 @@ export KUBECONF_KUBECONFIG=${KUBECONF_OUTPUT_DIR}/config
 export KUBECONF_K8S_VERSION=1.32.2
 export KUBECONF_K8S_IMAGE_REPO=kuberegistry.k8.cantrellcloud.net
 export KUBECONF_DNS_DOMAIN=k8.cantrellcloud.net
-export KUBECONF_SERVICE_SUBNET=10.69.0.0/21
-export KUBECONF_POD_SUBNET=10.213.0.0/23
+export KUBECONF_SERVICE_SUBNET=10.96.0.0/16
+export KUBECONF_POD_SUBNET=10.244.0.0/16
 echo
 echo ---
 echo
@@ -136,9 +136,9 @@ echo
 echo ---
 echo
 #echo Join worker nodes... ${KUBECONF_WORKER_IP_1}, ${KUBECONF_WORKER_IP_2}, ${KUBECONF_WORKER_IP_3} #, ${KUBECONF_WORKER_IP_4}
-#ssh -t kadmin@${KUBECONF_WORKER_IP_1} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
-#ssh -t kadmin@${KUBECONF_WORKER_IP_2} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
-#ssh -t kadmin@${KUBECONF_WORKER_IP_3} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
+ssh -t kadmin@${KUBECONF_WORKER_IP_1} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
+ssh -t kadmin@${KUBECONF_WORKER_IP_2} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
+ssh -t kadmin@${KUBECONF_WORKER_IP_3} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
 #ssh -t kadmin@${KUBECONF_WORKER_IP_4} sudo ${KUBECONF_REMOTE_DIR}/join-cluster.sh
 echo
 echo ---

@@ -952,8 +952,6 @@ systemctl status containerd
 
 #### Configure cgroup drivers
 
-Note: I did not configure the following
-
 - configure the system so it starts using systemd as cgroup
 
 ```bash
@@ -976,24 +974,23 @@ To configure containerd to use the systemd driver, set the following option in /
   SystemdCgroup = true
 ```
 
-- Confirm cgroup v2
-
 ```bash
-cat /etc/default/grub | grep systemd.unified_cgroup_hierarchy
+# disable IPv6
+
+
+vi /etc/default/grub
+GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1"
+GRUB_CMDLINE_LINUX="ipv6.disable=1"
+
+systemctl enable iscsid
+systemctl disable multipathd multipathd.socket
+
+swapoff -a
+vi /etc/fstab
+
 ```
 
-- Enable non-root cpu, cpuset, and i/o delegation - run as non-root user on k8s-controllers
 
-```bash
-sudo mkdir -p /etc/systemd/system/user@.service.d
-cat <<EOF | sudo tee /etc/systemd/system/user@.service.d/delegate.conf
-[Service]
-Delegate=cpu cpuset io memory pids
-EOF
-sudo systemctl daemon-reload
-
-cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.controllers  - run as non-root user on k8s-controllers
-```
 
 -------------------------------------------------------------------------------
 
@@ -1002,9 +999,10 @@ cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.c
 - After cloning
 
 ```bash
-hostnamectl set-hostname [nethostname]
+hostnamectl set-hostname kubework03
 rm /etc/machine-id
 systemd-machine-id-setup
+vi /etc/netplan/50-cloud-init.yaml
 ```
 
 - Turn off swap

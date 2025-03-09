@@ -131,7 +131,7 @@ kubectl -n longhorn-system svc longhorn-frontend
 ```
 
 ```bash
-annotate node <node_name> volumes.kubernetes.io/controller-managed-attach-detach=true
+annotate node <node_name> volumes.kubernetes.io/controller-managed-attach-detach=false
 ```
 
 

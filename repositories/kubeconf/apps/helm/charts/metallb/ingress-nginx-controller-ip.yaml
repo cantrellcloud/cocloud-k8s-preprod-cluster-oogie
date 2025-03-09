@@ -1,0 +1,16 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: ingress-nginx-controller-ip
+  namespace: metallb-system
+spec:
+  addresses:
+  - 10.0.69.40/32
+  autoAssign: true
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: metallb-l2
+  namespace: metallb-system
+---

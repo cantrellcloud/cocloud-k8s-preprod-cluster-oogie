@@ -5,16 +5,17 @@ if [ "$#" -ne 3 ]; then
 	exit 1
 fi
 # Variables
-# Replace with your desired chart respository and chart name
-export HELM_DIR="/opt/helm"
+# Replace with your desired chart repository and chart name
+export BUILD_DIR="/home/kadmin/kubeconf"
+export HELM_DIR=${BUILD_DIR}"/apps/helm"
 export CHART_REPO_NAME=${2}
 export CHART_REPO_URL=${3}
 export CHART_NAME=${1}
-export CHART_DIR="${HELM_DIR}/${CHART_NAME}"
+export CHART_DIR="${HELM_DIR}/charts/"
 echo
 echo --------------------
 echo
-echo Create Helm directory if not exist
+echo Create Helm directory if not exist... "${HELM_DIR}"
 mkdir -p "${HELM_DIR}"
 echo
 echo --------------------
@@ -26,9 +27,12 @@ echo
 echo --------------------
 echo
 echo Download the chart
-echo Chart Repo: "${CHART_REPO_NAME}"
-echo Chart Name: "${CHART_NAME}"
+echo Chart Directory: "${CHART_DIR}"
+echo Chart Name     : "${CHART_NAME}"
+echo Chart Repo     : "${CHART_REPO_NAME}"
+echo Chart Repo URL : "${CHART_REPO_URL}"
 echo
+echo Pulling: "${CHART_REPO_NAME}/${CHART_NAME}"  to  "${CHART_DIR}"
 helm pull "${CHART_REPO_NAME}/${CHART_NAME}" --untar --untardir "${CHART_DIR}"
 echo
 echo --------------------
@@ -43,42 +47,42 @@ echo
 echo Update dependencies to download required packages locally
 helm dependency update
 echo
-echo --------------------
-echo
-echo Identify all image names from the chart
-echo
+#echo --------------------
+#echo
+#echo Identify all image names from the chart
+#echo
 # Search for all images from the values.yaml files that were contained in the Helm chart
-find ${CHART_DIR} -name "values.yaml" -type f -exec egrep -oh "image: (.+)" {} \; | awk '{print $2}' > ${CHART_DIR}/images.txt
+#find ${CHART_DIR} -name "values.yaml" -type f -exec egrep -oh "image: (.+)" {} \; | awk '{print $2}' > ${CHART_DIR}/images.txt
 
-IMAGE_NAMES=$(grep -Eo "image: ([^:]+)" values.yaml | awk '{print $2}')
-echo
-echo Chart Images
-cat ${CHART_DIR}/images.txt
-echo
-echo "${IMAGE_NAMES}"
-echo
-echo --------------------
-echo
-echo Pull images for offline installation
+#IMAGE_NAMES=$(grep -Eo "image: ([^:]+)" values.yaml | awk '{print $2}')
+#echo
+#echo Chart Images
+#cat ${CHART_DIR}/images.txt
+#echo
+#echo "${IMAGE_NAMES}"
+#echo
+#echo --------------------
+#echo
+#echo Pull images for offline installation
 #for image in ${IMAGE_NAMES}; do
 #	echo "${image}"; sudo nerdctl pull "${image}"
 #done
-echo
-echo Image: "{$image}"
-echo
-echo --------------------
-echo
-echo Tag images for offline-registry.dev.local
+#echo
+#echo Image: "{$image}"
+#echo
+#echo --------------------
+#echo
+#echo Tag images for kuberegistry.k8.cantrellcloud.net
 #for image in ${IMAGE_NAMES}; do
-#	sudo nerdctl tag "${image}" "kuberegistry.dev.local/${image}"
+#	sudo nerdctl tag "${image}" "kuberegistry.k8.cantrellcloud.net/${image}"
 #done
-echo
-echo --------------------
-echo Push images to offline-registry.dev.local
+#echo
+#echo --------------------
+#echo Push images to kuberegistry.k8.cantrellcloud.net
 #for image in ${IMAGE_NAMES}; do
-#	sudo nerdctl push "kuberegistry.dev.local/${image}"
+#	sudo nerdctl push "kuberegistry.k8.cantrellcloud.net/${image}"
 #done
-echo
+#echo
 echo --------------------
 echo
 echo Package chart for offline distribution
@@ -90,4 +94,3 @@ echo Done
 echo "Helm chart '${CHART_NAME}' and its dependencies downloaded successfully!"
 echo
 echo
-
