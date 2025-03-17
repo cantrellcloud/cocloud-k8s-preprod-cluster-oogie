@@ -1,0 +1,9 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: rocket-ip
+  namespace: metallb-system
+spec:
+  addresses:
+  - 10.0.69.48/32
+  autoAssign: true
