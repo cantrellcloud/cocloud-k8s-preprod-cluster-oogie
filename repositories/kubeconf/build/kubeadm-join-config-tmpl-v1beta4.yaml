@@ -2,6 +2,10 @@ apiVersion: kubeadm.k8s.io/v1beta4
 caCertPath: /etc/kubernetes/pki/ca.crt
 discovery:
   bootstrapToken:
+    control-plane:
+      localAPIEndpoint:
+        advertiseAddress: ${KUBECONF_API_IP_1}
+        bindPort: 6443
     apiServerEndpoint: ${KUBECONF_API_ENDPOINT_INTERNAL}:6443
     caCertHashes:
     - ${CA_CERT_HASH}
@@ -12,11 +16,6 @@ nodeRegistration:
   criSocket: unix:///var/run/containerd/containerd.sock
   imagePullPolicy: IfNotPresent
   imagePullSerial: true
-  kubeletExtraArgs:
-  - name: enable-controller-attach-detach
-    value: "false"
-  - name: node-labels
-    value: node-type=rook
   taints: null
 timeouts:
   controlPlaneComponentHealthCheck: 4m0s
