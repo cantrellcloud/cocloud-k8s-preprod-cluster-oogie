@@ -74,5 +74,5 @@ kubeletVolumePluginPath: /var/lib/kubelet
 
 # Optionally configure the host and port used to access the Kubernetes API server.
 kubernetesServiceEndpoint:
-  host: ""
+  host: "copine-kube.cantrellcloud.net"
   port: "6443"

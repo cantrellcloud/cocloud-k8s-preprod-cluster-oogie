@@ -1,0 +1,10 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: pihole01-frontend-ip
+  namespace: metallb-system
+spec:
+  addresses:
+  - 10.0.69.41/32
+  autoAssign: true
+---

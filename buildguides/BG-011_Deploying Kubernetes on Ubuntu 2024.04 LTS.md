@@ -959,6 +959,11 @@ mkdir -p /etc/containerd
 
 ```
 
+```bash
+# update containerd config.toml file to use correct sandbox_image
+sed -i 's/pause:3.8/pause:3.10/' /etc/containerd/config.toml
+```
+
 - verify containerd config file - still need to work on this
 
 ```bash

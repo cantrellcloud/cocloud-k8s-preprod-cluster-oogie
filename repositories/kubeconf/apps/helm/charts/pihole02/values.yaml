@@ -1,0 +1,294 @@
+replicaCount: 1
+strategyType: RollingUpdate
+maxSurge: 1
+maxUnavailable: 1
+
+image:
+  repository: "pihole/pihole"
+  tag: ""
+  pullPolicy: IfNotPresent
+
+dualStack:
+  enabled: false
+
+dnsHostPort:
+  enabled: false
+  port: 53
+
+# -- Configuration for the DNS service on port 53
+serviceDns:
+  mixedService: false
+  type: LoadBalancer
+  port: 53
+  nodePort: ""
+  externalTrafficPolicy: Local
+  loadBalancerIP: "10.0.69.42"
+  loadBalancerIPv6: ""
+  annotations:
+    # metallb.universe.tf/address-pool: network-services
+    metallb.universe.tf/allow-shared-ip: pihole-svc
+  extraLabels:
+    {}
+
+# -- Configuration for the DHCP service on port 67
+serviceDhcp:
+  enabled: false
+  type: NodePort
+  port: 67
+  nodePort: ""
+  externalTrafficPolicy: Local
+  loadBalancerIP: "10.0.69.42"
+  loadBalancerIPv6: ""
+  annotations: {}
+    # metallb.universe.tf/address-pool: network-services
+    # metallb.universe.tf/allow-shared-ip: pihole-svc
+  extraLabels:
+    {}
+
+# -- Configuration for the web interface service
+serviceWeb:
+  http:
+    enabled: true
+    port: 80
+    nodePort: ""
+  https:
+    enabled: true
+    port: 443
+    nodePort: ""
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  loadBalancerIP: "10.0.69.42"
+  loadBalancerIPv6: ""
+  annotations:
+    # metallb.universe.tf/address-pool: network-services
+    metallb.universe.tf/allow-shared-ip: pihole-svc
+  extraLabels:
+    {}
+
+virtualHost: copine-pihole02
+
+# -- Configuration for the Ingress
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  pathType: ImplementationSpecific
+  hosts:
+    # virtualHost (default value is pi.hole) will be appended to the hosts
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #     #- virtualHost (default value is pi.hole) will be appended to the hosts
+  #      - chart-example.local
+
+# -- Probes configuration
+probes:
+  liveness:
+    type: httpGet
+    enabled: true
+    initialDelaySeconds: 60
+    failureThreshold: 10
+    timeoutSeconds: 5
+    port: http
+    scheme: HTTP
+  readiness:
+    type: httpGet
+    enabled: true
+    initialDelaySeconds: 60
+    failureThreshold: 10
+    timeoutSeconds: 5
+    port: http
+    scheme: HTTP
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+# -- `spec.PersitentVolumeClaim` configuration
+persistentVolumeClaim:
+  enabled: true
+  # existingClaim: ""
+  annotations: {}
+  accessModes:
+    - ReadWriteOnce
+  size: "2Gi"
+  storageClass: "longhorn"
+
+# -- Node selector values
+nodeSelector: {}
+
+# -- Toleration
+tolerations: []
+
+topologySpreadConstraints: []
+
+affinity: {}
+
+adminPassword: "S1airarose!895"
+
+# -- Use an existing secret for the admin password.
+admin:
+  # -- If set to false admin password will be disabled, adminPassword specified above and the pre-existing secret (if specified) will be ignored.
+  enabled: true
+  # -- Specify an existing secret to use as admin password
+  existingSecret: ""
+  # -- Specify the key inside the secret to use
+  passwordKey: "password"
+  # -- Specify [annotations](docs/Values.md#admin.annotations) to be added to the secret
+  annotations:
+    # reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    # reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "external-dns"
+
+# -- extraEnvironmentVars is a list of extra enviroment variables to set for pihole to use. You can use either scalars or project cm, secrets or pod fields via valueFrom
+extraEnvVars: {}
+  # TZ: UTC
+  # Project a variable
+  # SOME_VAR:
+  #   valueFrom:
+  #     configMapKeyRef:
+  #       key: some-var
+  #       name: my-config-map
+
+# -- extraEnvVarsSecret is a list of secrets to load in as environment variables.
+extraEnvVarsSecret: {}
+  # env_var:
+  #   name: secret-name
+  #   key: secret-key
+
+DNS1: "1.1.1.1"
+DNS2: "1.0.0.1"
+
+antiaff:
+  enabled: false
+  avoidRelease: pihole1
+  strict: true
+  namespaces: []
+
+doh:
+  enabled: false
+  name: "cloudflared"
+  repository: "crazymax/cloudflared"
+  tag: latest
+  pullPolicy: IfNotPresent
+  envVars: {}
+  command: []
+  probes:
+    liveness:
+      enabled: true
+      probe:
+        exec:
+          command:
+            - nslookup
+            - -po=5053
+            - cloudflare.com
+            - "127.0.0.1"
+      initialDelaySeconds: 60
+      failureThreshold: 10
+      timeoutSeconds: 5
+    readiness:
+      enabled: true
+      probe:
+        exec:
+          command:
+            - nslookup
+            - -po=5053
+            - cloudflare.com
+            - "127.0.0.1"
+      initialDelaySeconds: 60
+      failureThreshold: 10
+      timeoutSeconds: 5
+  monitoring:
+    podMonitor:
+      enabled: false
+
+dnsmasq:
+  enableCustomDnsMasq: true
+  upstreamServers: []
+  # - server=/foo.bar/192.168.178.10
+  # - server=/bar.foo/192.168.178.11
+
+  customDnsEntries: []
+  # - address=/foo.bar/192.168.178.10
+  # - address=/bar.foo/192.168.178.11
+
+  additionalHostsEntries:
+    - 172.16.1.11 cotpa-pubdc01.cantrelloffice.home
+    - 172.16.1.12 cotpa-pubdc02.cantrelloffice.home
+    - 172.16.1.13 cotpa-pubdc03.cantrelloffice.home
+    - 172.16.10.11 cotpa-dc01.cantrelloffice.cloud
+    - 172.16.10.12 cotpa-dc02.cantrelloffice.cloud
+    - 172.16.10.13 cotpa-dc03.cantrelloffice.cloud
+    - 172.16.13.2 comob-firewall01.cantrellcloud.net
+    - 172.16.69.71 copine-dc01.cantrelloffice.cloud
+    - 172.16.69.72 copine-dc02.cantrelloffice.cloud
+    - 10.0.15.1 cotpa-gateway.cantrellcloud.net
+    - 10.0.15.2 cotpa-firewall.cantrellcloud.net
+    - 10.0.15.11 cotpa-pihole01.cantrellcloud.net
+    - 10.0.15.12 cotpa-pihole02.cantrellcloud.net
+    - 10.0.15.63 cotpa-houlr01.cantrellcloud.net
+    - 10.0.15.62 cotpa-garlr01.cantrellcloud.net
+    - 10.0.15.70 cotpa-coresw.cantrellcloud.net
+
+  staticDhcpEntries: []
+  # staticDhcpEntries:
+  # - dhcp-host=MAC_ADDRESS,IP_ADDRESS,HOSTNAME
+
+  customSettings:
+  customCnameEntries: []
+
+adlists: {}
+whitelist: {}
+blacklist: {}
+regex: {}
+ftl: {}
+webHttp: "80"
+webHttps: "443"
+hostname: "copine-pihole02"
+hostNetwork: "false"
+privileged: "false"
+capabilities: {}
+  # add:
+  # - NET_ADMIN
+
+customVolumes:
+  enabled: false
+  config: {}
+extraVolumes: {}
+extraVolumeMounts: {}
+extraContainers: []
+extraObjects: []
+deploymentAnnotations: {}
+podAnnotations: {}
+extraInitContainers: []
+
+monitoring:
+  podMonitor:
+    enabled: false
+  sidecar:
+    enabled: false
+    port: 9617
+    image:
+      repository: ekofr/pihole-exporter
+      tag: v1.0.0
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        memory: 128Mi
+
+podDnsConfig:
+  enabled: true
+  policy: "None"
+  nameservers:
+    - 127.0.0.1
+    - 1.1.1.1
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1

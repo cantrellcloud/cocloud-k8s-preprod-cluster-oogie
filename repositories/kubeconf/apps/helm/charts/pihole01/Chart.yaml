@@ -12,4 +12,4 @@ sources:
 - https://pi-hole.net/
 - https://github.com/pi-hole
 - https://github.com/pi-hole/docker-pi-hole
-version: 2.29.0
+version: 2.29.1

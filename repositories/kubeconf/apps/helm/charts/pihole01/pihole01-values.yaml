@@ -1,0 +1,70 @@
+#-- pod Hostnames
+hostname: copine-pihole01
+virtualHost: copine-pihole01
+
+#f -- Enable persistent volume claim for storage
+persistentVolumeClaim:
+  enabled: true
+  storageClass: longhorn
+  accessMode: ReadWriteOnce
+  size: 2Gi
+
+# -- Administrator password when not using an existing secret (see below)
+adminPassword: "S1airarose!895"
+
+# -- default upstream DNS to use
+DNS1: "1.1.1.1"
+DNS2: "1.0.0.1"
+
+# -- pod DNS config
+podDnsConfig:
+  enabled: true
+  policy: "None"
+  nameservers:
+    - 127.0.0.1
+    - 1.1.1.1
+
+# -- DNS MASQ settings
+dnsmasq:
+  additionalHostsEntries: 
+    - 172.16.1.11 cotpa-pubdc01.cantrelloffice.home
+    - 172.16.1.12 cotpa-pubdc02.cantrelloffice.home
+    - 172.16.1.13 cotpa-pubdc03.cantrelloffice.home
+    - 172.16.10.11 cotpa-dc01.cantrelloffice.cloud
+    - 172.16.10.12 cotpa-dc02.cantrelloffice.cloud
+    - 172.16.10.13 cotpa-dc03.cantrelloffice.cloud
+    - 172.16.13.2 comob-firewall01.cantrellcloud.net
+    - 172.16.69.71 copine-dc01.cantrelloffice.cloud
+    - 172.16.69.72 copine-dc02.cantrelloffice.cloud
+    - 10.0.15.1 cotpa-gateway.cantrellcloud.net
+    - 10.0.15.2 cotpa-firewall.cantrellcloud.net
+    - 10.0.15.11 cotpa-pihole01.cantrellcloud.net
+    - 10.0.15.12 cotpa-pihole02.cantrellcloud.net
+    - 10.0.15.63 cotpa-houlr01.cantrellcloud.net
+    - 10.0.15.62 cotpa-garlr01.cantrellcloud.net
+    - 10.0.15.70 cotpa-coresw.cantrellcloud.net
+
+# -- WebUI Service settings
+serviceWeb:
+  loadBalancerIP: 10.0.69.41
+  type: LoadBalancer
+  annotations:
+    # metallb.universe.tf/address-pool: network-services
+    metallb.universe.tf/allow-shared-ip: pihole-svc
+
+# -- DNS Service settings
+serviceDns:
+  loadBalancerIP: 10.0.69.41
+  type: LoadBalancer
+  annotations:
+    # metallb.universe.tf/address-pool: network-services
+    metallb.universe.tf/allow-shared-ip: pihole-svc
+
+# -- Pod resources
+resources:
+  limits:
+    cpu: 512m
+    memory: 256Mi
+  requests:
+    cpu: 150m
+    memory: 128Mi

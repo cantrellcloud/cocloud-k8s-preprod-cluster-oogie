@@ -134,22 +134,6 @@ kgall
 
 
 
-calico/node-driver-registrar:v3.29.1
-
-
-
-# Install Tigera Calico Network Overlay and Policies (cni/net.d)
-kubectl create -f /home/adminlocal/tigera/tigera-operator.yaml
-
-  * update custom-resources.yaml file to match POD subnet
-kubectl create -f /home/adminlocal/tigera/custom-resources.yaml
-
-  * update calico.yaml file for cluster environment
-sed -i 's/docker.io/offline-registry.dev.local/' /home/adminlocal/tigera/custom-calico.yaml
-sed -i 's/:v3.25.0/:v3.29.1/' /home/adminlocal/tigera/custom-calico.yaml
-kubectl apply -f /home/adminlocal/tigera/calico.yaml
-
-
 ###############################################################################
 # kubeadm-init.tmpl.yaml
 #
@@ -196,18 +180,36 @@ networking:
 ###############################################################################
 # kubeadm-join-config.tmpl.yaml
 #
-apiVersion: kubeadm.k8s.io/v1beta1
+apiVersion: kubeadm.k8s.io/v1beta4
+caCertPath: /etc/kubernetes/pki/ca.crt
+discovery:
+  bootstrapToken:
+    control-plane:
+    apiServerEndpoint: ${KUBECONF_API_ENDPOINT_INTERNAL}:6443
+    caCertHashes:
+    - ${CA_CERT_HASH}
+    token: ${KUBECONF_TOKEN}
+  tlsBootstrapToken: ${KUBECONF_TOKEN}
 kind: JoinConfiguration
 nodeRegistration:
-kubeletExtraArgs:
-enable-controller-attach-detach: "false"
-node-labels: "node-type=rook"
-discovery:
-bootstrapToken:
-apiServerEndpoint: ${K8S_API_ENDPOINT_INTERNAL}
- token: ${KUBEADM_TOKEN}
- caCertHashes:
- - ${CA_CERT_HASH}
+  criSocket: unix:///var/run/containerd/containerd.sock
+  imagePullPolicy: IfNotPresent
+  imagePullSerial: true
+  kubeletExtraArgs:
+  - name: enable-controller-attach-detach
+    value: "false"
+  - name: node-labels
+    value: node-type=rook
+  taints: null
+timeouts:
+  controlPlaneComponentHealthCheck: 4m0s
+  discovery: 5m0s
+  etcdAPICall: 2m0s
+  kubeletHealthCheck: 4m0s
+  kubernetesAPICall: 1m0s
+  tlsBootstrap: 5m0s
+  upgradeManifests: 5m0s
+
 
 
 ###############################################################################
@@ -393,27 +395,3 @@ copy alternative-kubeconfig file to $HOME/.kube/config
 # note: the "tar" command must run with root permissions
 curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | tar -C /usr/local/bin -xvzf - govc
 
-
-###############################################################################
-# Install Helm on KubeAdmin
-#
-sudo apt install apt-transport-https gnupg2 -y
-
-curl https://baltocdn.com/helm/signing.asc | gpg --dearmor \
-| sudo tee /etc/apt/trusted.gpg.d/helm.gpg > /dev/null
-
-echo "deb [arch=$(dpkg --print-architecture)] https://baltocdn.com/helm/stable/debian/ all main" | \
-sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-sudo apt update
-sudo apt install helm
-
-
-###############################################################################
-# Install Helm Charts
-#
-helm repo add rocketchat https://rocketchat.github.io/helm-charts
-helm repo add mojo2600 https://mojo2600.github.io/pihole-kubernetes/
-helm repo add nginx-stable https://helm.nginx.com/stable
-
-$ helm repo add coredns https://coredns.github.io/helm
-$ helm --namespace=kube-system install coredns coredns/coredns

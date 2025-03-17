@@ -168,8 +168,12 @@ helm upgrade antrea antrea/antrea --namespace kube-system --version <TAG>
 
 ```bash
 helm repo add mojo2600 https://mojo2600.github.io/pihole-kubernetes/
-helm upgrade -i pihole mojo2600/pihole -f values.yaml
+helm upgrade -install pihole01 mojo2600/pihole -f values.yaml
 ```
 
 
 
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=90s
