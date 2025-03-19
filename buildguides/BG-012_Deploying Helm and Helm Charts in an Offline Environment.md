@@ -10,9 +10,15 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.
 sudo apt-get update
 sudo apt-get install helm
 
-## Flannel
+## Install Helm Charts
 
-**Needs manual creation of namespace to avoid helm error**
+Install the scripts in the order best suited for your installation.
+
+Special Note: Before installing any of the charts below,
+I have already modified each chart for my use and then repackaged. Using the helm -f flag is not needed.
+However, helm --set parameters are still valid.
+
+### Flannel
 
 ```bash
 kubectl create namespace kube-flannel
@@ -29,113 +35,254 @@ helm install flannel ../helm/packages/<chart-name>.tzg --namespace kube-flannel 
 
 # by online Internet
 helm upgrade --install flannel --set podCidr="10.213.0.0/21" --namespace kube-flannel flannel/flannel
-
 ```
 
-## Calico
+### Calico
+
+Create bash script: 01-install-calico.sh
 
 ```bash
-helm repo add projectcalico https://docs.tigera.io/calico/charts
-helm repo update
-helm pull projectcalico/tigera-operator --version v3.29.2 --untar --untardir .
-
-helm package ../helm/charts/<chart-name> -d ../helm/packages/
-helm install calico ../helm/packages/<chart-name>.tzg --namespace tigera-operator --create-namespace
-
+#!/usr/bin/env bash
+clear
+echo
+echo Exporting variables...
+export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export HELM_DIR=/home/kadmin/kubeconf/apps/helm
+echo
+echo Installing Calico CNI...
 helm upgrade --install calico ${HELM_DIR}/packages/tigera-operator-v3.29.2.tgz --namespace tigera-operator --create-namespace
-curl -L https://github.com/projectcalico/calico/releases/download/v3.29.2/calicoctl-linux-amd64 -o calicoctl
-chmod +x ./calicoctl
-cp ./calicoctl /usr/local/bin/
+echo
+echo ---
+echo
+echo Waiting for Calico CNI to be ready...
+echo
+echo 'kubectl wait --for=condition=available --timeout=600s deployment/calico-typha --namespace calico-system'
+kubectl wait --for=condition=available --timeout=600s deployment/calico-typha --namespace tigera-system
 
-alias cali=calicoctl
-cali ipam show --show-blocks
+echo 'kubectl wait --for=condition=available --timeout=600s deployment/calico-apiserver --namespace tigera-system'
+kubectl wait --for=condition=available --timeout=600s deployment/calico-apiserver --namespace calico-apiserver
 
-# from a worker node
-sudo calicoctl node status
+echo 'kubectl wait --for=condition=available --timeout=600s deployment/calico-kube-controllers --namespace tigera-system'
+kubectl wait --for=condition=available --timeout=600s deployment/calico-kube-controllers --namespace calico-system
+
+echo 'kubectl wait --for=condition=available --timeout=600s daemonset/calico-node --namespace tigera-system'
+kubectl wait --for=condition=available --timeout=600s daemonset/calico-node --namespace calcio-system
+echo
+echo ---
+echo
+#echo Create Calico CNI resources...
+#kubectl create -f ${KUBE_RESOURCES_DIR}/calico-resources.yaml
+#echo
+echo Calico CNI installed.
+echo
 ```
 
-## MetalLB
+### MetalLB
 
-kubectl edit configmap -n kube-system kube-proxy
-
-```text
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-kind: KubeProxyConfiguration
-mode: "ipvs"
-ipvs:
-  strictARP: true
-```
+Create bash script: 02-install-metallb.sh
 
 ```bash
+#!/usr/bin/env bash
+clear
+echo
+echo Exporting variables...
+export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export HELM_DIR=/home/kadmin/kubeconf/apps/helm
+echo
+echo ---
+echo
+echo Create namespace and label namespace privileged...
 kubectl create namespace metallb-system
 kubectl label --overwrite namespace metallb-system pod-security.kubernetes.io/enforce=privileged
 kubectl label --overwrite namespace metallb-system pod-security.kubernetes.io/audit=privileged
 kubectl label --overwrite namespace metallb-system pod-security.kubernetes.io/warn=privileged
-
-# by package
-helm upgrade --install metallb ../../packages --namespace metallb-system
-
-# by online Internet
-helm upgrade --install metallb metallb/metallb --namespace metallb-system
+echo
+echo ---
+echo
+echo Installing MetalLB...
+helm upgrade --install metallb ${HELM_DIR}/packages/metallb-0.14.9.tgz --namespace metallb-system
+echo
+echo ---
+echo
+echo Waiting for MetalLB to be ready...
+kubectl wait --for=condition=available --timeout=600s deployment/metallb-controller --namespace metallb-system
+kubectl wait --for=condition=available --timeout=600s daemonset/metallb-speaker --namespace metallb-system
+echo
+echo ---
+echo
+echo Creating MetalLB Layer2 Advertisment...
+kubectl create -f ${KUBE_RESOURCES_DIR}/metallb-layer2-advertise.yaml
+echo
+echo ---
+echo
+echo MetalLB installed.
+echo
 ```
 
-Create ingress-nginx-controller-ip
+### Ingress-Nginx
+
+Create bash script: 03-install-ingress-nginx.sh
 
 ```bash
-kubectl create -f ./ingress-nginx-controller-ip.yaml
+#!/usr/bin/env bash
+clear
+echo
+echo Exporting variables...
+export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export HELM_DIR=/home/kadmin/kubeconf/apps/helm
+echo
+echo ---
+echo
+echo Installing Ingress-Nginx...
+helm upgrade --install ingress-nginx ${HELM_DIR}/packages/ingress-nginx-4.12.0.tgz \
+  --namespace ingress-nginx --create-namespace --set "controller.extraArgs.enable-ssl-passthrough=true"
+echo
+echo ---
+echo
+echo Waiting for Ingress-Nginx to be ready...
+kubectl wait --for=condition=available --timeout=600s deployment/ingress-nginx-controller --namespace ingress-nginx
+echo
+echo ---
+echo
+echo Creating Ingress-Nginx-Controller IP...
+kubectl create -f ${KUBE_RESOURCES_DIR}/ingress-nginx-controller-ip.yaml
+echo
+echo ---
+echo
+echo Ingress-Nginx installed.
+echo
 ```
 
-## Ingress-Nginx
+### Longhorn Storage
+
+Create bash script: 04-install-longhorn.sh
 
 ```bash
-helm upgrade --install ingress-nginx ../../packages/ingress-nginx-4.12.0.tgz --namespace ingress-nginx --create-namespace
-
-helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace -set "controller.extraArgs.enable-ssl-passthrough=true
-```
-
-## Longhorn Storage
-
-```bash
-echo Run Environment check... 
-curl -sSfL https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/scripts/environment_check.sh | bash
-
-helm repo add longhorn https://charts.longhorn.io
-helm repo update
-helm upgrade --install longhorn ../packages/longhorn-1.8.1.tgz --namespace longhorn-system --create-namespace -f ./values.yaml
-```
-
-Create Longhorn Auth, Ingress, and Request IP
-
-```bash
+#!/usr/bin/env bash
+clear
+echo
+echo Exporting variables...
+export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export HELM_DIR=/home/kadmin/kubeconf/apps/helm
+echo
+echo ---
+echo
+echo Installing Longhorn Storage...
+helm upgrade --install longhorn ${HELM_DIR}/packages/longhorn-1.8.1.tgz \
+  --namespace longhorn-system --create-namespace -f ${HELM_DIR}/charts/longhorn/values.yaml
+echo
+echo ---
+echo
+echo Waiting for Longhorn to be ready...
+kubectl wait --for=condition=available --timeout=600s deployment/longhorn-manager --namespace longhorn-system
+kubectl wait --for=condition=available --timeout=600s deployment/longhorn-driver-deployer --namespace longhorn-system
+kubectl wait --for=condition=available --timeout=600s deployment/longhorn-ui --namespace longhorn-system
+echo
+echo ---
+echo
 echo Creating longhorn basic-auth...
-source ./longhorn-basic-auth.sh
-echo
-echo--
-echo
-echo Creating Ingress using longhorn-frontend.yaml...
-kubectl -n longhorn-system create -f longhorn-ingress.yaml
+source ${KUBE_RESOURCES_DIR}/longhorn-basic-auth.sh
 echo
 echo ---
 echo
-echo Requesting Longhorn IP address...
-kubectl create -f ./longhorn-ip.yaml
+echo Creating Longhorn Ingress...
+kubectl -n longhorn-system create -f ${KUBE_RESOURCES_DIR}/longhorn-ingress.yaml
 echo
 echo ---
 echo
+echo Reserving Longhorn IP address...
+kubectl -n metallb-system create -f ${KUBE_RESOURCES_DIR}/longhorn-ip.yaml
+echo
+echo ---
+echo
+echo Longhorn Storage installed.
+echo
 ```
 
-Verify Longhorn Frontend service has External IP
+### Cert-Manager
+
+Create bash script: 05-install-cert-manager.sh
 
 ```bash
-kubectl -n longhorn-system svc longhorn-frontend
+#!/usr/bin/env bash
+clear
+echo
+echo Exporting variables...
+export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export HELM_DIR=/home/kadmin/kubeconf/apps/helm
+echo
+echo ---
+echo
+echo Installing Certificate Manager...
+helm upgrade --install cert-manager ${HELM_DIR}/packages/cert-manager-v1.17.1.tgz \
+  --namespace cert-manager --create-namespace -f ${HELM_DIR}/charts/cert-manager/values.yaml
+echo
+echo ---
+echo
+echo Waiting for Certificate Manager to be ready...
+kubectl wait --for=condition=available --timeout=600s deployment/cert-manager --namespace cert-manager
+echo
+echo ---
+echo
+echo Certificate Manager installed.
+echo
 ```
+
+### Pihole
+
+Create bash script: 06-install-pihole01.sh
 
 ```bash
-annotate node <node_name> volumes.kubernetes.io/controller-managed-attach-detach=false
+#!/usr/bin/env bash
+clear
+echo
+echo Exporting variables...
+export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export HELM_DIR=/home/kadmin/kubeconf/apps/helm
+echo
+echo ---
+echo
+echo Installing Pihole01...
+helm upgrade --install pihole01 ${HELM_DIR}/packages/pihole-2.29.1.tgz -f ${HELM_DIR}/charts/pihole01/values.yaml --namespace pihole-system --create-namespace
+echo
+echo ---
+echo
+echo Waiting for Pihole01 to be ready...
+kubectl wait --for=condition=available --timeout=600s deployment/pihole01 --namespace pihole-system
+echo
+echo ---
+echo
+echo Pihole01 installed.
+echo
 ```
 
+Create bash script: 07-install-pihole02.sh
 
-## Dashboard
+```bash
+#!/usr/bin/env bash
+clear
+echo
+echo Exporting variables...
+export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export HELM_DIR=/home/kadmin/kubeconf/apps/helm
+echo
+echo ---
+echo
+echo Installing Pihole02...
+helm upgrade --install pihole02 ${HELM_DIR}/packages/pihole-2.29.1.tgz -f ${HELM_DIR}/charts/pihole02/values.yaml --namespace pihole-system
+echo
+echo ---
+echo
+echo Waiting for Pihole02 to be ready...
+kubectl wait --for=condition=available --timeout=600s deployment/pihole02 --namespace pihole-system
+echo
+echo ---
+echo
+echo Pihole02 installed.
+echo
+```
+
+### Dashboard
 
 ```bash
 helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
@@ -163,17 +310,3 @@ helm install flow-aggregator ../helm/packages/<chart-name>.tgz -namespace kong -
   - Upgrading CRDs requires an extra step; see explanation below
 kubectl apply -f https://github.com/antrea-io/antrea/releases/download/<TAG>/antrea-crds.yml
 helm upgrade antrea antrea/antrea --namespace kube-system --version <TAG>
-
-## Pihole
-
-```bash
-helm repo add mojo2600 https://mojo2600.github.io/pihole-kubernetes/
-helm upgrade -install pihole01 mojo2600/pihole -f values.yaml
-```
-
-
-
-kubectl wait --namespace ingress-nginx \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/component=controller \
-  --timeout=90s

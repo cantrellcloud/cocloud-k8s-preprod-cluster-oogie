@@ -218,7 +218,7 @@ service:
 
   ## ServiceType
   ## ref: https://kubernetes.io/docs/user-guide/services/#publishing-services---service-types
-  type: ClusterIP
+  type: LoadBalancer
 
   ## Optional static port assignment for service type NodePort.
   # nodePort: 30000
@@ -226,7 +226,7 @@ service:
   port: 80
 
   ## Optional when LoadBalancer specified ServiceType.
-  loadBalancerIP: ""
+  loadBalancerIP: "10.0.69.48"
 
 ## Optional custom labels for the deployment resource.
 deploymentLabels: {}
