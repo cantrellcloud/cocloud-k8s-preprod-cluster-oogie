@@ -101,12 +101,12 @@ app:
     #  #  Is this CRD namespaced?
     #  namespaced: true
   ingress:
-    enabled: false
+    enabled: true
     hosts:
       # Keep 'localhost' host only if you want to access Dashboard using 'kubectl port-forward ...' on:
       # https://localhost:8443
       - localhost
-    # - kubernetes.dashboard.domain.com
+      - dashboard.k8.cantrellcloud.net
     ingressClassName: internal-nginx
     # Use only if your ingress controllers support default ingress classes.
     # If set to true ingressClassName will be ignored and not added to the Ingress resources.
@@ -384,7 +384,10 @@ kong:
   enabled: true
   ## Configuration reference: https://docs.konghq.com/gateway/3.6.x/reference/configuration
   env:
-    dns_order: LAST,A,CNAME,AAAA,SRV
+    ADMIN_LISTEN: 127.0.0.1:8444 http2 ssl 
+    PROXY_LISTEN: 0.0.0.0:8443 http2 ssl 
+    STATUS_LISTEN: 0.0.0.0:8100
+    dns_order: LAST,A,CNAME,SRV
     plugins: 'off'
     nginx_worker_processes: 1
   ingressController:
@@ -394,7 +397,8 @@ kong:
   dblessConfig:
     configMap: kong-dbless-config
   proxy:
-    type: ClusterIP
+    type: LoadBalancer
+    loadBalancerIP: "10.0.69.50"
     http:
       enabled: false
 
