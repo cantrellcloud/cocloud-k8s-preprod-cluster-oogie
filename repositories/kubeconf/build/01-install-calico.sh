@@ -15,6 +15,7 @@ echo
 echo 'wait --for=condition=available --timeout=600s deployment/tigera-operator --namespace tigera-operator'
 kubectl wait --for=condition=available --timeout=600s deployment/tigera-operator --namespace tigera-operator
 echo
+wait 10s
 echo 'wait --for=condition=available --timeout=600s deployment/calico-typha --namespace calico-system'
 kubectl wait --for=condition=available --timeout=600s deployment/calico-typha --namespace calico-system
 echo
