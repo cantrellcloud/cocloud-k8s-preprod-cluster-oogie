@@ -12,17 +12,17 @@ echo ---
 echo
 echo Waiting for Calico CNI to be ready...
 echo
-echo 'kubectl wait --for=condition=available --timeout=600s deployment/calico-typha --namespace calico-system'
-kubectl wait --for=condition=available --timeout=600s deployment/calico-typha --namespace tigera-system
-
-echo 'kubectl wait --for=condition=available --timeout=600s deployment/calico-apiserver --namespace tigera-system'
-kubectl wait --for=condition=available --timeout=600s deployment/calico-apiserver --namespace calico-apiserver
-
-echo 'kubectl wait --for=condition=available --timeout=600s deployment/calico-kube-controllers --namespace tigera-system'
+echo 'wait --for=condition=available --timeout=600s deployment/tigera-operator --namespace tigera-operator'
+kubectl wait --for=condition=available --timeout=600s deployment/tigera-operator --namespace tigera-operator
+echo
+echo 'wait --for=condition=available --timeout=600s deployment/calico-typha --namespace calico-system'
+kubectl wait --for=condition=available --timeout=600s deployment/calico-typha --namespace calico-system
+echo
+echo 'wait --for=condition=available --timeout=600s deployment/calico-kube-controllers --namespace calico-system'
 kubectl wait --for=condition=available --timeout=600s deployment/calico-kube-controllers --namespace calico-system
-
-echo 'kubectl wait --for=condition=available --timeout=600s daemonset/calico-node --namespace tigera-system'
-kubectl wait --for=condition=available --timeout=600s daemonset/calico-node --namespace calcio-system
+echo
+echo 'kubectl wait --for=condition=available --timeout=600s deployment/calico-apiserver --namespace calico-apiserver'
+kubectl wait --for=condition=available --timeout=600s deployment/calico-apiserver --namespace calico-apiserver
 echo
 echo ---
 echo
