@@ -22,7 +22,7 @@ serviceDns:
   port: 53
   nodePort: ""
   externalTrafficPolicy: Local
-  loadBalancerIP: "10.0.69.41"
+  loadBalancerIP: 10.0.69.41
   loadBalancerIPv6: ""
   annotations:
     # metallb.universe.tf/address-pool: network-services
@@ -37,7 +37,7 @@ serviceDhcp:
   port: 67
   nodePort: ""
   externalTrafficPolicy: Local
-  loadBalancerIP: "10.0.69.41"
+  loadBalancerIP: 10.0.69.41
   loadBalancerIPv6: ""
   annotations: {}
     # metallb.universe.tf/address-pool: network-services
@@ -57,7 +57,7 @@ serviceWeb:
     nodePort: ""
   type: LoadBalancer
   externalTrafficPolicy: Local
-  loadBalancerIP: "10.0.69.41"
+  loadBalancerIP: 10.0.69.41
   loadBalancerIPv6: ""
   annotations:
     # metallb.universe.tf/address-pool: network-services

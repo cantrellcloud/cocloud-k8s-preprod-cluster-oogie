@@ -226,7 +226,7 @@ service:
   port: 80
 
   ## Optional when LoadBalancer specified ServiceType.
-  loadBalancerIP: "10.0.69.48"
+  loadBalancerIP: 10.0.69.48
 
 ## Optional custom labels for the deployment resource.
 deploymentLabels: {}

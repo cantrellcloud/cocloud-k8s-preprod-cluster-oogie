@@ -17,11 +17,11 @@ echo Waiting for Ingress-Nginx to be ready...
 kubectl wait --for=condition=available --timeout=600s deployment/ingress-nginx-controller --namespace ingress-nginx
 echo
 echo ---
-echo
-echo Creating Ingress-Nginx-Controller IP...
-kubectl create -f ${KUBE_RESOURCES_DIR}/ingress-nginx-controller-ip.yaml
-echo
-echo ---
+#echo
+#echo Creating Ingress-Nginx-Controller IP...
+#kubectl create -f ${KUBE_RESOURCES_DIR}/ingress-nginx-controller-ip.yaml
+#echo
+#echo ---
 echo
 echo Ingress-Nginx installed.
 echo

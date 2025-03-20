@@ -398,7 +398,7 @@ kong:
     configMap: kong-dbless-config
   proxy:
     type: LoadBalancer
-    loadBalancerIP: "10.0.69.50"
+    loadBalancerIP: 10.0.69.50
     http:
       enabled: false
 

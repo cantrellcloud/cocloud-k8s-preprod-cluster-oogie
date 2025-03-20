@@ -28,11 +28,11 @@ echo
 echo Creating Longhorn Ingress...
 kubectl -n longhorn-system create -f ${KUBE_RESOURCES_DIR}/longhorn-ingress.yaml
 echo
-echo ---
-echo
-echo Reserving Longhorn IP address...
-kubectl -n metallb-system create -f ${KUBE_RESOURCES_DIR}/longhorn-ip.yaml
-echo
+#echo ---
+#echo
+#echo Reserving Longhorn IP address...
+#kubectl -n metallb-system create -f ${KUBE_RESOURCES_DIR}/longhorn-ip.yaml
+#echo
 echo ---
 echo
 echo Longhorn Storage installed.
