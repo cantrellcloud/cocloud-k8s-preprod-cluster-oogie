@@ -195,17 +195,17 @@ serviceAccount:
 ### ref : http://kubernetes.io/docs/user-guide/ingress/
 ###
 ingress:
-  enabled: false
+  enabled: true
   pathType: Prefix
-  # ingressClassName: "nginx"
+  ingressClassName: "nginx"
   annotations:
-    {}
+    cert-manager.io/cluster-issuer: kube-ca-clusterissuer
     # kubernetes.io/ingress.class: "nginx"
   path: /
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  tls:
+    - secretName: kube-rocketchat
+      hosts:
+        - rocket.cantrelloffice.cloud
   federation:
     serveWellKnown: false
 
