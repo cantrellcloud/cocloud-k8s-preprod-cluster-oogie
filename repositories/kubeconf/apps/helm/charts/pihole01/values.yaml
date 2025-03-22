@@ -69,20 +69,21 @@ virtualHost: copine-pihole01
 
 # -- Configuration for the Ingress
 ingress:
-  enabled: false
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: ca-clusterissuer
     # kubernetes.io/tls-acme: "true"
   path: /
   pathType: ImplementationSpecific
   hosts:
     # virtualHost (default value is pi.hole) will be appended to the hosts
-    - chart-example.local
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #     #- virtualHost (default value is pi.hole) will be appended to the hosts
-  #      - chart-example.local
+    - copine-pihole01.cantrellcloud.net
+    - copine-pihole01
+  tls:
+    - secretName: pihole01-tls
+      hosts:
+       #- virtualHost (default value is pi.hole) will be appended to the hosts
+        - copine-pihole01.cantrellcloud.net
 
 # -- Probes configuration
 probes:
