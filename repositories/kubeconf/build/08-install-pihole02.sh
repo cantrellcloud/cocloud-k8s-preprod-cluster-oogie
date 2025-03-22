@@ -8,7 +8,7 @@ echo
 echo ---
 echo
 echo Installing Pihole02...
-helm upgrade --install pihole02 ${HELM_DIR}/packages/pihole-2.29.1.tgz -f ${HELM_DIR}/charts/pihole02/values.yaml --namespace pihole-system
+helm upgrade --install pihole02 ${HELM_DIR}/packages/pihole02/pihole-2.29.1.tgz -f ${HELM_DIR}/charts/pihole02/values.yaml --namespace pihole-system
 echo
 echo ---
 echo
