@@ -46,7 +46,7 @@ Create bash script: 01-install-calico.sh
 clear
 echo
 echo Exporting variables...
-export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export KUBE_RESOURCES_DIR=/home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/resource-yaml.files
 export HELM_DIR=/home/kadmin/kubeconf/apps/helm
 echo
 echo Installing Calico CNI...
@@ -86,7 +86,7 @@ Create bash script: 02-install-metallb.sh
 clear
 echo
 echo Exporting variables...
-export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export KUBE_RESOURCES_DIR=/home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/resource-yaml.files
 export HELM_DIR=/home/kadmin/kubeconf/apps/helm
 echo
 echo ---
@@ -128,7 +128,7 @@ Create bash script: 03-install-ingress-nginx.sh
 clear
 echo
 echo Exporting variables...
-export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export KUBE_RESOURCES_DIR=/home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/resource-yaml.files
 export HELM_DIR=/home/kadmin/kubeconf/apps/helm
 echo
 echo ---
@@ -162,7 +162,7 @@ Create bash script: 04-install-longhorn.sh
 clear
 echo
 echo Exporting variables...
-export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export KUBE_RESOURCES_DIR=/home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/resource-yaml.files
 export HELM_DIR=/home/kadmin/kubeconf/apps/helm
 echo
 echo ---
@@ -208,7 +208,7 @@ Create bash script: 05-install-cert-manager.sh
 clear
 echo
 echo Exporting variables...
-export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export KUBE_RESOURCES_DIR=/home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/resource-yaml.files
 export HELM_DIR=/home/kadmin/kubeconf/apps/helm
 echo
 echo ---
@@ -237,7 +237,7 @@ Create bash script: 06-install-pihole01.sh
 clear
 echo
 echo Exporting variables...
-export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export KUBE_RESOURCES_DIR=/home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/resource-yaml.files
 export HELM_DIR=/home/kadmin/kubeconf/apps/helm
 echo
 echo ---
@@ -263,7 +263,7 @@ Create bash script: 07-install-pihole02.sh
 clear
 echo
 echo Exporting variables...
-export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export KUBE_RESOURCES_DIR=/home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/resource-yaml.files
 export HELM_DIR=/home/kadmin/kubeconf/apps/helm
 echo
 echo ---

@@ -2,7 +2,7 @@
 clear
 echo
 echo Exporting variables...
-export KUBE_RESOURCES_DIR=/home/kadmin/kubeconf/build/resource-yaml.files
+export KUBE_RESOURCES_DIR=/home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/resource-yaml.files
 export HELM_DIR=/home/kadmin/kubeconf/apps/helm
 echo
 echo Installing Calico CNI...

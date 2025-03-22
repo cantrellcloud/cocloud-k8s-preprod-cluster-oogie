@@ -552,11 +552,11 @@ echo Use the .req request file to generate the signed certificate from the exter
 echo
 echo -------------------------------
 echo Copy request file to caadmin home
-cp $dir/requests/$CaName.csr /home/kadmin/kubeconf/build/$CaName.req
+cp $dir/requests/$CaName.csr /home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/$CaName.req
 echo
 echo -------------------------------
 echo Change permissions to kadmin
-chown kadmin:kadmin /home/kadmin/kubeconf/build/$CaName.req
+chown kadmin:kadmin /home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/$CaName.req
 echo END
 echo
 ```
@@ -1031,8 +1031,8 @@ mkdir -p /opt/containers/kuberegistry
 mkdir -p /opt/containers/kuberegistry/certs
 mkdir -p /opt/containers/kuberegistry/data
 cd /opt/containers/kuberegistry
-cp /home/kadmin/kubeconf/build/certs/kuberegistry.pem /opt/containers/kuberegistry/certs/kuberegistry.crt
-cp /home/kadmin/kubeconf/build/certs/kuberegistry-key.pem /opt/containers/kuberegistry/certs/kuberegistry-key.pem
+cp /home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/certs/kuberegistry.pem /opt/containers/kuberegistry/certs/kuberegistry.crt
+cp /home/kadmin/cocloud-k8s-preprod-cluster-oogie/build/certs/kuberegistry-key.pem /opt/containers/kuberegistry/certs/kuberegistry-key.pem
 tee build.sh <<EOF
 #!/usr/bin/env bash
 nerdctl run -d \

@@ -5,7 +5,7 @@ echo
 echo Exporting variables
 export KUBECONF_CLUSTER_NAME=copine-kube
 export KUBECONF_OUTPUT_DIR=/opt/kubeclusters/${KUBECONF_CLUSTER_NAME}
-export KUBECONF_BUILD_DIR=/home/kadmin/kubeconf/build
+export KUBECONF_BUILD_DIR=/home/kadmin/cocloud-k8s-preprod-cluster-oogie/build
 export KUBECONF_REMOTE_DIR=/home/kadmin/kubernetes
 export KUBECONF_PKI_ALGORITHM=RSA-2048
 export KUBECONF_TOKEN=$(kubeadm token generate)
