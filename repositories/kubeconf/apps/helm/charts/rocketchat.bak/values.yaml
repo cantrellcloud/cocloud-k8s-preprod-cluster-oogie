@@ -16,7 +16,7 @@ imagePullSecrets: []
 
 ## Host for the application
 ## set it to a domain pointing to your loadbalancer
-# host:
+host: rocket.cantrelloffice.cloud
 
 replicaCount: 1
 minAvailable: 1
@@ -115,11 +115,11 @@ mongodb:
   initdbScriptsConfigMap: rocketchat-mongodb-fix-clustermonitor-role-configmap
 
   auth:
-    rootPassword: rocketchatroot
+    rootPassword: "S1airarose!895"
     usernames:
       - rocketchat
     passwords:
-      - rocketchat
+      - "S1airarose!895"
     databases:
       - rocketchat
 
@@ -143,7 +143,7 @@ mongodb:
     ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
     ##   GKE, AWS & OpenStack)
     ##
-    # storageClass: "-"
+    storageClass: "longhorn"
     accessMode: ReadWriteOnce
     size: 8Gi
 
@@ -153,7 +153,7 @@ mongodb:
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
 ##
 persistence:
-  enabled: false
+  enabled: true
   # existingClaim: existingClaimName
   ## rocketchat data Persistent Volume Storage Class
   ## If defined, storageClassName: <storageClass>
@@ -162,7 +162,7 @@ persistence:
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
   ##
-  # storageClass: "-"
+  storageClass: "longhorn"
   accessMode: ReadWriteOnce
   size: 8Gi
 
@@ -194,17 +194,16 @@ serviceAccount:
 ## Configure the ingress object to hook into existing infastructure
 ### ref : http://kubernetes.io/docs/user-guide/ingress/
 ###
-host: rocket.cantrelloffice.cloud
 ingress:
   enabled: true
   pathType: Prefix
   ingressClassName: "nginx"
   annotations:
-    cert-manager.io/cluster-issuer: ca-clusterissuer
+    cert-manager.io/cluster-issuer: kube-ca-clusterissuer
     # kubernetes.io/ingress.class: "nginx"
   path: /
   tls:
-    - secretName: rocketchat-tls
+    - secretName: kube-rocketchat
       hosts:
         - rocket.cantrelloffice.cloud
   federation:
@@ -219,7 +218,7 @@ service:
 
   ## ServiceType
   ## ref: https://kubernetes.io/docs/user-guide/services/#publishing-services---service-types
-  type: ClusterIP
+  type: LoadBalancer
 
   ## Optional static port assignment for service type NodePort.
   # nodePort: 30000
@@ -227,7 +226,7 @@ service:
   port: 80
 
   ## Optional when LoadBalancer specified ServiceType.
-  loadBalancerIP: ""
+  loadBalancerIP: 10.0.69.48
 
 ## Optional custom labels for the deployment resource.
 deploymentLabels: {}

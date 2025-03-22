@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: 7.4.1
+appVersion: 6.13.0
 dependencies:
 - condition: mongodb.enabled
   name: mongodb
@@ -32,4 +32,4 @@ maintainers:
 name: rocketchat
 sources:
 - https://github.com/RocketChat/Docker.Official.Image/
-version: 7.4.1
+version: 6.23.2
